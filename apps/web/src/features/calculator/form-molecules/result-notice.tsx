@@ -2,8 +2,8 @@
 // verbatim from calculator-form.tsx (019-polish readability split, no behavior change).
 import type { PriceResult } from "@3dprecify/pricing-core";
 
-import { avisosDePlausibilidade } from "@/shared/lib/plausibilidade";
-import { Aviso } from "@/shared/ui";
+import { plausibilityWarnings } from "@/shared/lib/plausibility";
+import { Notice } from "@/shared/ui";
 
 /**
  * Homologação automatizada — os dois avisos que NÃO têm campo culpado, porque só o RESULTADO os
@@ -17,14 +17,14 @@ import { Aviso } from "@/shared/ui";
  * `printGrams: 1` declara ao módulo puro que a peça existe — a tela só chega aqui com um resultado
  * calculado, então a guarda "formulário recém-aberto" já foi satisfeita pelo próprio render.
  */
-export function AvisoDeResultado({ result }: { result: PriceResult }) {
-    const avisos = avisosDePlausibilidade(
+export function ResultNotice({ result }: { result: PriceResult }) {
+    const notices = plausibilityWarnings(
         { printGrams: 1 },
         { custoTotal: result.custoTotal, precoVarejo: result.precoVarejo },
     );
-    if (avisos.length === 0) return null;
+    if (notices.length === 0) return null;
     // 019/PR-C (T056, prancheta 14d) — vira `<Aviso>`, sem "Entendi": não há campo para corrigir, e
     // um botão que não dispensa nada é botão vazio. Duas frases juntas param de ser um `join(" ")` —
     // são dois fatos, e cada um pede seu próprio `<p>`.
-    return <Aviso data-testid="aviso-resultado" lines={avisos.map((a) => a.texto)} />;
+    return <Notice data-testid="aviso-resultado" lines={notices.map((a) => a.text)} />;
 }

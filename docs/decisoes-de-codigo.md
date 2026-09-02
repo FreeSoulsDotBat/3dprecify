@@ -137,7 +137,7 @@ vai mexer sem saber o que está mexendo.
 
 ### Onde isso vive no código
 
-- `apps/web/src/shared/lib/plausibilidade.ts` → `LIMIARES`, `AvisoPlausibilidade`
+- `apps/web/src/shared/lib/plausibility.ts` → `THRESHOLDS`, `PlausibilityWarning`
 
 ---
 
@@ -771,7 +771,7 @@ página (regra de user-activation) — que é exatamente o caso em que existe al
 
 ### Onde isso vive no código
 
-- `apps/web/src/features/calculator/aviso-de-saida.ts` → `useAvisoDeSaida`
+- `apps/web/src/features/calculator/use-unsaved-changes-warning.ts` → `useUnsavedChangesWarning`
 
 ---
 
@@ -1335,7 +1335,7 @@ enquanto a lista é o que está na tela; quando o formulário inerte abre, o rod
 
 ### Onde isso vive no código
 
-- `apps/web/src/shared/billing/vazio-didatico.tsx` → `VazioDidatico`
+- `apps/web/src/shared/billing/didactic-empty.tsx` → `DidacticEmpty`
 
 ---
 
@@ -1804,7 +1804,7 @@ hospeda o [[DEC-003]] — a mesma fronteira.
 
 ### Onde isso vive no código
 
-- `apps/web/src/shared/lib/use-aviso-de-campo.ts` → `useAvisoDeCampo`
+- `apps/web/src/shared/lib/use-field-warning.ts` → `useFieldWarning`
 
 ---
 
@@ -1947,7 +1947,7 @@ acreditando que o orçamento nunca foi feito.
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/historico/historico-page.tsx` → `HistoricoPage`
+- `apps/web/src/pages/historico/historico-page.tsx` → `HistoryPage`
 
 ---
 
@@ -1969,7 +1969,7 @@ Esta é a única parte do campo com estado próprio, e ela existe só para os ca
 
 ### Onde isso vive no código
 
-- `apps/web/src/features/calculator/form-atoms/campo-de-horas.tsx` → `CampoDeHoras`
+- `apps/web/src/features/calculator/form-atoms/hours-field.tsx` → `HoursField`
 
 ---
 
@@ -2471,7 +2471,7 @@ valor que o documento guarda nunca é coagido em silêncio.
 
 ### Onde isso vive no código
 
-- `apps/web/src/features/calculator/form-organisms/machine-cost-fields.tsx` → `detectRitmoMode`, `manualOverride`
+- `apps/web/src/features/calculator/form-organisms/machine-cost-fields.tsx` → `detectUsageRateMode`, `manualOverride`
 
 ---
 

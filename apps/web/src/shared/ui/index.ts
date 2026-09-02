@@ -31,8 +31,8 @@ export type { IconProps, IconName } from "./icon";
 export { Logo } from "./logo";
 export type { LogoProps, LogoVariant } from "./logo";
 
-export { Grafismo } from "./grafismo";
-export type { GrafismoProps, GrafismoName } from "./grafismo";
+export { Ornament } from "./ornament";
+export type { OrnamentProps, OrnamentName } from "./ornament";
 
 export { Spinner } from "./spinner";
 export type { SpinnerProps, SpinnerSize } from "./spinner";
@@ -96,5 +96,5 @@ export type { TableProps } from "./table";
 
 export { TextField } from "./text-field";
 export type { TextFieldProps } from "./text-field";
-export { Aviso } from "./aviso";
-export type { AvisoProps } from "./aviso";
+export { Notice } from "./notice";
+export type { NoticeProps } from "./notice";

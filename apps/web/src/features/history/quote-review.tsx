@@ -4,7 +4,7 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatBRL } from "@/shared/lib/decimal-ptbr";
 import {
     Alert,
-    Aviso,
+    Notice,
     BreakdownRow,
     Button,
     Card,
@@ -210,7 +210,7 @@ export function QuoteReview({
                 />
 
                 {/* 18e — "lock" não existe no conjunto curado; `Aviso` já usa `info` por padrão. */}
-                <Aviso>{t.freezeNote.replace(/\{data\}/g, validUntilLabel)}</Aviso>
+                <Notice>{t.freezeNote.replace(/\{data\}/g, validUntilLabel)}</Notice>
             </Card>
 
             <div className="flex flex-col gap-2">

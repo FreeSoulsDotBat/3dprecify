@@ -3,7 +3,7 @@ import { type ReactNode, useState } from "react";
 import { type CatalogListState } from "@/entities/catalog/use-catalog";
 import { honestWriteError } from "@/shared/api/error-messages";
 import { type PremiumGate } from "@/shared/billing/premium-gate";
-import { type VazioFeature } from "@/shared/billing/vazio-didatico";
+import { type DidacticEmptyFeature } from "@/shared/billing/didactic-empty";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatBRL } from "@/shared/lib/decimal-ptbr";
 import { useIsListDense, useIsWide } from "@/shared/lib/use-is-wide";
@@ -36,7 +36,7 @@ import "./catalog-master-detail.css";
 // ⚠ @doc DEC-070 — as regras de honestidade da escrita são impostas AQUI: toast só depois de um
 //   2xx real, e a barreira do não-pagante é a AUSÊNCIA do handler de submit, nunca um 2º gate.
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 const cf = messages.catalogForm;
 
 /** O formulário passado por quem monta o painel (filamentos/impressoras, §0.2) — nomeado para ser
@@ -69,8 +69,8 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
     copy: CatalogPanelCopy;
     rowName: (item: TItem) => string;
     rowSummary: (item: TItem) => string;
-    /** Qual vazio didático mostrar (`shared/billing/vazio-didatico.tsx`) — um por aba. */
-    feature: VazioFeature;
+    /** Qual vazio didático mostrar (`shared/billing/didactic-empty.tsx`) — um por aba. */
+    feature: DidacticEmptyFeature;
     /** Sheet mode (filaments/printers, §0.2). Omitted when the panel NAVIGATES instead (products). */
     emptyForm?: TForm;
     toFormValues?: (item: TItem) => TForm;
@@ -239,7 +239,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                 <Button
                     variant="ghost"
                     size="sm"
-                    aria-label={`${catalogo.duplicate} ${nameOf(item)}`}
+                    aria-label={`${catalog.duplicate} ${nameOf(item)}`}
                     onClick={() => onDuplicate(item)}
                 >
                     <Icon name="copy" size={18} aria-hidden />
@@ -248,7 +248,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
             <Button
                 variant="ghost"
                 size="sm"
-                aria-label={`${catalogo.remove} ${nameOf(item)}`}
+                aria-label={`${catalog.remove} ${nameOf(item)}`}
                 onClick={() => (remove ? setDeleteTarget(item) : openEdit(item))}
             >
                 <Icon name="trash-2" size={18} aria-hidden />
@@ -269,7 +269,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                 <span className="tf-plist__price">{formatBRL(price)}</span>
                 {was !== undefined && (
                     <span className="tf-plist__was" data-testid="product-row-was">
-                        {catalogo.priceWasLabel.replace("{valor}", formatBRL(was))}
+                        {catalog.priceWasLabel.replace("{valor}", formatBRL(was))}
                     </span>
                 )}
                 {flag && (
@@ -419,8 +419,8 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
         <div className="flex flex-col gap-3">
             {/* Offline read (Q2): calm info banner, never danger. Writes still surface an honest intercept. */}
             {list.stale && (
-                <Alert tone="info" title={catalogo.offlineTitle}>
-                    {catalogo.offlineBody}
+                <Alert tone="info" title={catalog.offlineTitle}>
+                    {catalog.offlineBody}
                 </Alert>
             )}
 

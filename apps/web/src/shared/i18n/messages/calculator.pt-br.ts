@@ -1,8 +1,8 @@
 // 016/US6 (FR-908, conteudo-tooltips.md §Notas de escopo #5) — two tooltip numbers carry an
 // EXPIRY DATE (ANEEL's projected national average tariff, the legal minimum wage per hour) and
 // live in their OWN named keys so the annual refresh is a VALUE edit, not a hunt through prose.
-const TOOLTIP_REF_TARIFA_MEDIA_NACIONAL = "R$ 0,85"; // projeção ANEEL dez/2026 — revisar 1º/jan
-const TOOLTIP_REF_SALARIO_MINIMO_HORA = "R$ 7,37"; // salário mínimo 2026 ÷ 220h — revisar 1º/jan
+const TOOLTIP_REF_NATIONAL_AVG_TARIFF = "R$ 0,85"; // projeção ANEEL dez/2026 — revisar 1º/jan
+const TOOLTIP_REF_MIN_WAGE_HOUR = "R$ 7,37"; // salário mínimo 2026 ÷ 220h — revisar 1º/jan
 
 // E1 full corrected pricing calculator (spec 004). US1 (correct retail + wholesale) +
 // US2 (transparent breakdown) are the MVP. Copy is pt-BR, i18n-ready (TD-001). The
@@ -129,7 +129,7 @@ export const calculator = {
         // dizia R$ 0,85: duas médias nacionais diferentes para o mesmo fato, a uma tecla de
         // distância. Passa a ler a MESMA constante datada que o tooltip lê, então a revisão anual
         // move os dois juntos.
-        tariff: `Confira a tarifa: R$ {v} por kWh está bem acima do que se paga no Brasil (perto de ${TOOLTIP_REF_TARIFA_MEDIA_NACIONAL}). Na conta de luz, divida o valor total pelos kWh do mês. Nada foi recusado.`,
+        tariff: `Confira a tarifa: R$ {v} por kWh está bem acima do que se paga no Brasil (perto de ${TOOLTIP_REF_NATIONAL_AVG_TARIFF}). Na conta de luz, divida o valor total pelos kWh do mês. Nada foi recusado.`,
         machineLifetime:
             "Confira a vida útil: {v} horas é menos de uma semana ligada. Se você pensou em anos, multiplique pelas horas que imprime por ano — 1.200 h/ano × 3 anos = 3.600 h. Nada foi recusado.",
         rollWeight:
@@ -169,7 +169,7 @@ export const calculator = {
                 "Se você pensou em anos, multiplique pelas horas que imprime por ano — 1.200 h/ano × 3 anos = 3.600 h. Corrija o campo acima para calcular.",
             avgPowerKw:
                 "Acima de 5 kW já é faixa de chuveiro elétrico — uma impressora fica perto de 0,12 kW. A etiqueta costuma trazer watts: 120 W são 0,12 kW. Corrija o campo acima para calcular.",
-            tariffPerKwh: `No Brasil se paga perto de ${TOOLTIP_REF_TARIFA_MEDIA_NACIONAL} por kWh. Na conta de luz, divida o valor total pelos kWh do mês. Corrija o campo acima para calcular.`,
+            tariffPerKwh: `No Brasil se paga perto de ${TOOLTIP_REF_NATIONAL_AVG_TARIFF} por kWh. Na conta de luz, divida o valor total pelos kWh do mês. Corrija o campo acima para calcular.`,
             rollWeightKg:
                 "O rolo comum tem 1 kg — se você informou gramas, 1.000 g são 1 kg. Corrija o campo acima para calcular.",
             printGrams:
@@ -447,8 +447,8 @@ export const calculator = {
     // 016/US6 (FR-908) — the two numbers with an expiry date, named so the annual refresh is a
     // value edit (see the module-level consts + conteudo-tooltips.md §Notas de escopo #5).
     tooltipRefs: {
-        nationalAverageTariff: TOOLTIP_REF_TARIFA_MEDIA_NACIONAL,
-        minimumWagePerHour: TOOLTIP_REF_SALARIO_MINIMO_HORA,
+        nationalAverageTariff: TOOLTIP_REF_NATIONAL_AVG_TARIFF,
+        minimumWagePerHour: TOOLTIP_REF_MIN_WAGE_HOUR,
     },
     // 016/US6 (FR-908, T023/T025) — the 9 field explanations researched + sourced in
     // conteudo-tooltips.md (verbatim text; procedência lives there, NOT here). `label` names the
@@ -469,7 +469,7 @@ export const calculator = {
         },
         tariff: {
             label: "Sobre a tarifa de energia",
-            body: `É o preço de cada unidade de luz — multiplicado pelas horas de impressão, vira o custo de energia da peça. Pegue sua conta de luz e divida o valor total pelos kWh consumidos no mês: esse é o preço real que você paga, já com impostos e bandeira. Sem a conta em mãos, a média do país fica perto de ${TOOLTIP_REF_TARIFA_MEDIA_NACIONAL}.`,
+            body: `É o preço de cada unidade de luz — multiplicado pelas horas de impressão, vira o custo de energia da peça. Pegue sua conta de luz e divida o valor total pelos kWh consumidos no mês: esse é o preço real que você paga, já com impostos e bandeira. Sem a conta em mãos, a média do país fica perto de ${TOOLTIP_REF_NATIONAL_AVG_TARIFF}.`,
         },
         // Serve o modo "ajustar" da US8 — o número bruto ainda é digitado ali.
         machineLifetime: {
@@ -501,7 +501,7 @@ export const calculator = {
         },
         laborRate: {
             label: "Sobre o valor da hora",
-            body: `É quanto vale uma hora do seu trabalho. Sem esse número, você entrega horas de graça no preço. Descubra o seu assim: quanto quer ganhar por mês ÷ horas que pretende trabalhar no mês. Ex.: R$ 3.000 ÷ 160 h = R$ 18,75. Só para comparar, o salário mínimo dá ${TOOLTIP_REF_SALARIO_MINIMO_HORA} a hora.`,
+            body: `É quanto vale uma hora do seu trabalho. Sem esse número, você entrega horas de graça no preço. Descubra o seu assim: quanto quer ganhar por mês ÷ horas que pretende trabalhar no mês. Ex.: R$ 3.000 ÷ 160 h = R$ 18,75. Só para comparar, o salário mínimo dá ${TOOLTIP_REF_MIN_WAGE_HOUR} a hora.`,
         },
     },
     // 016/US7 (FR-909) — the printTime border: two fields (h + min), the engine keeps receiving

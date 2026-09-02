@@ -37,7 +37,7 @@ import { premiumGate } from "@/shared/billing/premium-gate";
 import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { spineForMarketplace } from "@/features/calculator/fee-prefill";
-import { useAvisoDeSaida } from "@/features/calculator/aviso-de-saida";
+import { useUnsavedChangesWarning } from "@/features/calculator/use-unsaved-changes-warning";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useIsWide } from "@/shared/lib/use-is-wide";
 import { useSessionStore } from "@/shared/session/session-store";
@@ -55,7 +55,7 @@ import "@/features/scenarios/scenarios-wide.css";
 
 const t = messages.calculator;
 
-export function CalcularPage() {
+export function CalculatePage() {
     const {
         control,
         watch,
@@ -68,7 +68,7 @@ export function CalcularPage() {
         mode: "onChange",
     });
     // @doc DEC-025 — avisa antes de sair; `isDirty` é o gatilho: quem não mexeu nada não vê nada.
-    useAvisoDeSaida(isDirty);
+    useUnsavedChangesWarning(isDirty);
     const {
         fields,
         append,

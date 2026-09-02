@@ -13,7 +13,7 @@ import type { HistoryItem } from "@/entities/history/outbox";
 import { EntryActions } from "@/features/history/entry-actions";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Badge, Card } from "@/shared/ui";
-import { useHistoricoSearch } from "@/pages/historico/historico-search";
+import { useHistorySearch } from "@/pages/historico/historico-search";
 
 // 019/Polish — moved verbatim out of history-ledger.tsx, along with the formatting helpers it
 // reads from `entities/history/history-format` (unchanged imports, just re-sourced from this
@@ -31,7 +31,7 @@ export function SnapshotCard({ item }: { item: HistoryItem }) {
     // está lendo — e a spec pede a marcação (FR-021). O Catálogo já marcava; aqui faltava.
     // Fora do mestre-detalhe (mobile) `?snapshot=` toma a tela inteira, então nada fica marcado —
     // que é o certo: não há lista para marcar.
-    const aberto = useHistoricoSearch().snapshot;
+    const aberto = useHistorySearch().snapshot;
     const selecionado = aberto === item.clientSnapshotId;
 
     // A blocked/failed/unauthenticated entry needs an escape hatch right where the seller sees it, or

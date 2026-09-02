@@ -54,7 +54,7 @@ export function CheckoutReturnPanel() {
         // exhaustive-deps lint rule is configured in this project — nothing to suppress.)
     }, [pending, attempts]);
 
-    function backToConta() {
+    function backToAccount() {
         void navigate({ to: "/conta" });
     }
 
@@ -87,7 +87,7 @@ export function CheckoutReturnPanel() {
                     >
                         {t.returnVerifyAgain}
                     </Button>
-                    <Button variant="ghost" onClick={backToConta}>
+                    <Button variant="ghost" onClick={backToAccount}>
                         {t.returnBackToAccount}
                     </Button>
                 </div>
@@ -104,7 +104,7 @@ export function CheckoutReturnPanel() {
                 <Button variant="secondary" onClick={() => entitlement.refetch()}>
                     {t.returnRefresh}
                 </Button>
-                <Button variant="ghost" onClick={backToConta}>
+                <Button variant="ghost" onClick={backToAccount}>
                     {t.returnBackToAccount}
                 </Button>
             </div>

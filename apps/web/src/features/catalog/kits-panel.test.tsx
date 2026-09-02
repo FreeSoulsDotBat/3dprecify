@@ -35,7 +35,7 @@ vi.mock("@/entities/user/use-entitlement", () => ({
 
 import { KitsPanel } from "./kits-panel";
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 function kit(over: Partial<BomOut> = {}): BomOut {
     return {
@@ -88,15 +88,15 @@ describe("KitsPanel — the saved kits list (K2)", () => {
         expect(screen.getByText("Kit Prateleira")).toBeInTheDocument();
         // A kit stores inputs only (FR-407) — a row describes structure, never money.
         expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
-        expect(screen.getByText(catalogo.countKitPieces.replace("{n}", "2"))).toBeInTheDocument();
+        expect(screen.getByText(catalog.countKitPieces.replace("{n}", "2"))).toBeInTheDocument();
     });
 
     it("shows the honest empty state when the account has no kits yet", () => {
         mockKits([]);
         render(<KitsPanel />);
 
-        expect(screen.getByText(catalogo.emptyKitsTitle)).toBeInTheDocument();
-        expect(screen.getByText(catalogo.emptyKitsBody)).toBeInTheDocument();
+        expect(screen.getByText(catalog.emptyKitsTitle)).toBeInTheDocument();
+        expect(screen.getByText(catalog.emptyKitsBody)).toBeInTheDocument();
     });
 
     it("opens a saved kit back in the composer (reload → recompute, never a stored price)", () => {
@@ -113,7 +113,7 @@ describe("KitsPanel — the saved kits list (K2)", () => {
         mockKits([]);
         render(<KitsPanel />);
 
-        fireEvent.click(screen.getByRole("button", { name: new RegExp(catalogo.addKit, "i") }));
+        fireEvent.click(screen.getByRole("button", { name: new RegExp(catalog.addKit, "i") }));
 
         expect(navigateMock).toHaveBeenCalledWith({ to: "/kits" });
     });

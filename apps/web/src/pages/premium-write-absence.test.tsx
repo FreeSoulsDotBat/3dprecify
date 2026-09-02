@@ -259,8 +259,8 @@ import { PrintersPanel } from "@/features/catalog/printers-panel";
 import { ProductsPanel } from "@/features/catalog/products-panel";
 
 import { BomPage } from "@/pages/bom/bom-page";
-import { CatalogoPage } from "@/pages/catalogo/catalogo-page";
-import { HistoricoPage } from "@/pages/historico/historico-page";
+import { CatalogPage } from "@/pages/catalogo/catalogo-page";
+import { HistoryPage } from "@/pages/historico/historico-page";
 
 // ── Test helpers ─────────────────────────────────────────────────────────────────────────────
 
@@ -516,7 +516,7 @@ describe("T107 — pages/catalogo/catalogo-page.tsx (as 4 abas + ProdutoPage): z
     for (const gate of NON_ACTIVE_GATES) {
         it(`todas as abas @ ${gate}: clicar em tudo não chama nenhuma escrita`, () => {
             setGate(gate, gate === "lapsed");
-            render(<CatalogoPage />);
+            render(<CatalogPage />);
             exercisePage();
             assertNoWrites();
         });
@@ -524,7 +524,7 @@ describe("T107 — pages/catalogo/catalogo-page.tsx (as 4 abas + ProdutoPage): z
         it(`?produto=novo @ ${gate}: formulário inerte (ou parede honesta de pré-requisito) não chama nenhuma escrita`, () => {
             setGate(gate, gate === "lapsed");
             searchState.current = { produto: "novo" };
-            render(<CatalogoPage />);
+            render(<CatalogPage />);
             exercisePage();
             assertNoWrites();
         });
@@ -532,7 +532,7 @@ describe("T107 — pages/catalogo/catalogo-page.tsx (as 4 abas + ProdutoPage): z
         it(`?produto=<id existente> @ ${gate}: editar (ou honesto "não encontrado") não chama nenhuma escrita`, () => {
             setGate(gate, gate === "lapsed");
             searchState.current = { produto: productA.id };
-            render(<CatalogoPage />);
+            render(<CatalogPage />);
             exercisePage();
             assertNoWrites();
         });
@@ -574,7 +574,7 @@ describe("T107 — pages/historico/historico-page.tsx: zero escrita sob gate ≠
             });
             useHistoryMock.mockReturnValue(gate === "lapsed" ? listOf([historyItemA]) : listOf([]));
 
-            render(<HistoricoPage />);
+            render(<HistoryPage />);
             exercisePage();
             assertNoWrites();
         });

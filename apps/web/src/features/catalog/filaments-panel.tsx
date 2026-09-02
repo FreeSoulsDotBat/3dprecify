@@ -26,7 +26,7 @@ import { FilamentForm } from "./filament-form";
 // apresentação, ele agora também decide se `create`/`update` chegam ao painel — a barreira do
 // não-premium é a AUSÊNCIA do mutator, nunca uma checagem de `if` que alguém possa esquecer.
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 const cf = messages.catalogForm;
 
 export function FilamentsPanel() {
@@ -48,17 +48,17 @@ export function FilamentsPanel() {
     return (
         <CatalogPanel<FilamentOut, FilamentFormValues, FilamentIn>
             list={list}
-            detailKicker={catalogo.detailFilament}
+            detailKicker={catalog.detailFilament}
             feature="filaments"
             gate={gate}
             copy={{
-                addLabel: catalogo.addFilament,
-                emptyTitle: catalogo.emptyFilamentsTitle,
-                emptyBody: catalogo.emptyFilamentsBody,
+                addLabel: catalog.addFilament,
+                emptyTitle: catalog.emptyFilamentsTitle,
+                emptyBody: catalog.emptyFilamentsBody,
                 newTitle: cf.newFilament,
                 editTitle: cf.editFilament,
                 savedToast: cf.savedFilament,
-                count: (n) => catalogo.countFilaments.replace("{n}", String(n)),
+                count: (n) => catalog.countFilaments.replace("{n}", String(n)),
             }}
             rowName={(f) => f.name}
             rowSummary={filamentSummary}

@@ -2,9 +2,9 @@ import { type HTMLAttributes, type ReactNode } from "react";
 
 import { Icon } from "./icon";
 
-import "./aviso.css";
+import "./notice.css";
 
-export interface AvisoProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
+export interface NoticeProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
     /** Texto do aviso (`tf-aviso__text`), quando é UMA frase só. Ignorado se `lines` for passado. */
     children?: ReactNode;
     /** 019/PR-C (T056, prancheta 14d) — quando o aviso soma DUAS frases (ex.: preço zerado + custo
@@ -22,7 +22,7 @@ export interface AvisoProps extends Omit<HTMLAttributes<HTMLDivElement>, "childr
  * provavelmente significa outra coisa. `role="status"` porque é polido (acompanha, não
  * interrompe) — nunca `role="alert"`, que é do `tf-alert` de erro.
  */
-export function Aviso({ children, lines, action, className = "", ...rest }: AvisoProps) {
+export function Notice({ children, lines, action, className = "", ...rest }: NoticeProps) {
     return (
         <div className={["tf-aviso", className].filter(Boolean).join(" ")} role="status" {...rest}>
             <Icon name="info" size={16} className="tf-aviso__icon" />

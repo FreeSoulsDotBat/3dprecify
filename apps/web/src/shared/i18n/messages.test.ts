@@ -20,9 +20,9 @@ const EXCECOES: ReadonlyMap<string, string> = new Map([]);
 describe("019/T027 — o vocabulário visível", () => {
     it('nenhuma frase visível diz "canal"/"canais" (símbolos ficam; só o texto muda)', () => {
         const achados = leaves(messages)
-            .filter(([, texto]) => /canal|canais/i.test(texto))
+            .filter(([, text]) => /canal|canais/i.test(text))
             .filter(([caminho]) => !EXCECOES.has(caminho))
-            .map(([caminho, texto]) => `${caminho}: ${texto}`);
+            .map(([caminho, text]) => `${caminho}: ${text}`);
         expect(achados, `folhas com "canal":\n${achados.join("\n")}`).toEqual([]);
     });
 

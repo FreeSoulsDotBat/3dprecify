@@ -192,13 +192,13 @@ describe("ponteiros de volta — `## Onde isso vive no código`", () => {
         const rotten: string[] = [];
         for (const p of backPointers) {
             if (!exists(p.file)) {
-                rotten.push(`${p.doc}: o file \`${p.file}\` não exists mais`);
+                rotten.push(`${p.doc}: o arquivo \`${p.file}\` não existe mais`);
                 continue;
             }
             const text = read(p.file);
             for (const s of p.symbols) {
                 if (!text.includes(s)) {
-                    rotten.push(`${p.doc}: \`${s}\` não exists mais em \`${p.file}\``);
+                    rotten.push(`${p.doc}: \`${s}\` não existe mais em \`${p.file}\``);
                 }
             }
         }

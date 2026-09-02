@@ -30,7 +30,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
-import { ContaPage } from "@/pages/conta/conta-page";
+import { AccountPage } from "@/pages/conta/conta-page";
 import { TopBar } from "@/widgets/top-bar/top-bar";
 
 // 009/T011 (E4, PR-A) — EVERY sign-out entry point goes through the seam.
@@ -93,7 +93,7 @@ function renderConta() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
     return render(
         <QueryClientProvider client={client}>
-            <ContaPage />
+            <AccountPage />
         </QueryClientProvider>,
     );
 }

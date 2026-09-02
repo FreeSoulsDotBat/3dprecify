@@ -14,7 +14,7 @@ afterEach(() => cleanup());
 const cf = messages.catalogForm;
 const fields = messages.calculator.fields;
 const validation = messages.calculator.validation;
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 // Inputs are queried by their ACCESSIBLE NAME (getByRole), like the calculator tests — the required
 // "*" is aria-hidden so the name is the bare label, and the value inputs are role="textbox".
@@ -102,9 +102,7 @@ describe("FilamentForm — os cinco estados do gate (019/PR-B T045, ex-013/FB-02
         expect(within(frozen).getByRole("textbox", { name: cf.material })).toBeDisabled();
         expect(within(frozen).getByRole("textbox", { name: fields.costPerRoll })).toBeDisabled();
         expect(within(frozen).getByRole("textbox", { name: fields.rollWeight })).toBeDisabled();
-        expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
-            catalogo.reactivateBody,
-        );
+        expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(catalog.reactivateBody);
 
         const saveBtn = screen.getByRole("button", { name: cf.save });
         expect(saveBtn).toBeVisible();

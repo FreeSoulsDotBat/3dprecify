@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useHistory, useSyncOutbox, type HistoryFilters } from "@/entities/history/use-history";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { premiumGate, type PremiumGate } from "@/shared/billing/premium-gate";
-import { VazioDidatico } from "@/shared/billing/vazio-didatico";
+import { DidacticEmpty } from "@/shared/billing/didactic-empty";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionExpired } from "@/shared/session/session-expiry";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
@@ -13,7 +13,7 @@ import { useSessionStore } from "@/shared/session/session-store";
 import { Alert, Button, EmptyState, Icon, Spinner } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
-import { useHistoricoSearch } from "@/pages/historico/historico-search";
+import { useHistorySearch } from "@/pages/historico/historico-search";
 
 import {
     type CustomRange,
@@ -33,7 +33,7 @@ export function HistoryLedger({ embedded = false }: { embedded?: boolean } = {})
     const navigate = useNavigate();
     // 018/US2 — `embedded` = a lista é a coluna ESQUERDA do mestre-detalhe: sem `<section>` própria,
     // sem PageHeader (a página já os tem). O conteúdo é o mesmo, byte por byte.
-    const selecionado = useHistoricoSearch().snapshot;
+    const selecionado = useHistorySearch().snapshot;
 
     // The filter state (US6). The search DEBOUNCES into the query key — the input stays responsive
     // while at most one server read fires per settled term. The período is a preset (or a custom
@@ -140,7 +140,7 @@ export function HistoryLedger({ embedded = false }: { embedded?: boolean } = {})
         // 019/PR-B (T046) — o vazio didático É o conteúdo inteiro: sem filtros, sem fila, sem spinner
         // de lista — não há nada para filtrar ou sincronizar em uma conta que nunca gravou (ou não está
         // logada). O convite é o ÚNICO desta tela (FR-1906/invariante um-teaser).
-        <VazioDidatico
+        <DidacticEmpty
             feature="quotes"
             gate={doorGate}
             action={

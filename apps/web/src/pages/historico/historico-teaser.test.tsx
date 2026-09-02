@@ -25,7 +25,7 @@ vi.mock("@tanstack/react-router", () => ({
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 
-import { HistoricoPage } from "./historico-page";
+import { HistoryPage } from "./historico-page";
 
 // 009/T014 (E4, PR-A) — the honest door. 016/US1+US2 (T006/T008): rewritten for the unified
 // `PremiumTeaser` (feature=QUOTES) and the "Orçamentos" label (renamed from "Histórico").
@@ -76,7 +76,7 @@ afterEach(() => cleanup());
 describe("free and signed-out meet an explanation, never a broken list", () => {
     it("free: a página normal (cabeçalho de sempre) mostra o vazio didático, e fabrica NENHUMA entrada de amostra", () => {
         useEntitlementMock.mockReturnValue(entitlement("none"));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         // O cabeçalho de sempre — a parede não é mais uma tela substituta.
         expect(screen.getByText(t.title)).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
 
     it("free: o botão do vazio é 'Fazer um cálculo' — nunca um formulário de criar (32f)", () => {
         useEntitlementMock.mockReturnValue(entitlement("none"));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(
             screen.getByRole("button", { name: messages.premiumTeaser.makeACalculation }),
@@ -102,7 +102,7 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
     it("signed out: a mesma porta sem parede, com o caminho de entrada via o href do próprio CTA", () => {
         useSessionStore.setState({ status: "anonymous", user: null });
         useEntitlementMock.mockReturnValue(entitlement(null));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
         const cta = screen.getByRole("link", { name: tb.subscribeAction });
@@ -111,14 +111,14 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
 
     it("exatamente UM convite Premium por tela (FR-1906, invariante um-teaser)", () => {
         useEntitlementMock.mockReturnValue(entitlement("none"));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getAllByRole("link", { name: tb.subscribeAction })).toHaveLength(1);
     });
 
     it("o preço é HONESTO (E6/US7) e nada é prometido antes de existir", () => {
         useEntitlementMock.mockReturnValue(entitlement("none"));
-        const { container } = render(<HistoricoPage />);
+        const { container } = render(<HistoryPage />);
         const text = container.textContent ?? "";
 
         for (const n of text.match(/\d+[.,]\d{2}/g) ?? []) {
@@ -131,7 +131,7 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
 
     it("LAPSED is NOT teased — a lapsed seller's records are their own data (FR-517)", () => {
         useEntitlementMock.mockReturnValue(entitlement("lapsed"));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.queryByTestId("vazio-didatico")).not.toBeInTheDocument();
         expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();

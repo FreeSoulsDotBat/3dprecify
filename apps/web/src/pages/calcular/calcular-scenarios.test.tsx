@@ -36,7 +36,7 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
     };
 });
 
-import { CalcularPage } from "./calcular-page";
+import { CalculatePage } from "./calcular-page";
 
 const s = messages.scenarios;
 const tb = messages.billing;
@@ -49,7 +49,7 @@ function renderPage() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
         <QueryClientProvider client={client}>
-            <CalcularPage />
+            <CalculatePage />
         </QueryClientProvider>,
     );
 }

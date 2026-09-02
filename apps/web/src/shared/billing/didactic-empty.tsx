@@ -9,9 +9,10 @@ import { TeaserUpgrade } from "./teaser-upgrade";
 // @doc DEC-046 — a lista não vira parede: está vazia porque nunca houve o que salvar, e o
 //   vazio EXPLICA a feature. Sem coroa, sem preço no título, um convite só por tela.
 
-export type VazioFeature = "filaments" | "printers" | "products" | "kits" | "quotes" | "scenarios";
+export type DidacticEmptyFeature =
+    "filaments" | "printers" | "products" | "kits" | "quotes" | "scenarios";
 
-interface VazioCopy {
+interface DidacticEmptyCopy {
     icon: IconName;
     title: string;
     body: string;
@@ -19,7 +20,7 @@ interface VazioCopy {
 
 const c = messages.catalog;
 
-function copyOf(feature: VazioFeature): VazioCopy {
+function copyOf(feature: DidacticEmptyFeature): DidacticEmptyCopy {
     switch (feature) {
         case "filaments":
             return {
@@ -56,8 +57,8 @@ function copyOf(feature: VazioFeature): VazioCopy {
     }
 }
 
-export interface VazioDidaticoProps {
-    feature: VazioFeature;
+export interface DidacticEmptyProps {
+    feature: DidacticEmptyFeature;
     /** O estado que a tela leu de `premiumGate(...)`. Só decide DUAS coisas aqui: se o convite é
      *  "Assinar" (nunca teve / deslogado) ou "Reativar" (teve e venceu), e para onde o deslogado vai. */
     gate: Exclude<PremiumGate, "active">;
@@ -67,7 +68,7 @@ export interface VazioDidaticoProps {
     teaser?: boolean;
 }
 
-export function VazioDidatico({ feature, gate, action, teaser = true }: VazioDidaticoProps) {
+export function DidacticEmpty({ feature, gate, action, teaser = true }: DidacticEmptyProps) {
     const copy = copyOf(feature);
     // `unknown` (logado sem resposta do servidor) NÃO recebe convite: convidar a assinar quem talvez
     // já pague é presumir — o precedente é o `PlanState` do E6, e o CF-045 da homologação vigia

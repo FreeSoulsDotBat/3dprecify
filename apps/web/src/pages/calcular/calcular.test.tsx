@@ -22,7 +22,7 @@ vi.mock("@/entities/user/use-entitlement", () => ({
     }),
 }));
 
-import { CalcularPage } from "./calcular-page";
+import { CalculatePage } from "./calcular-page";
 
 afterEach(() => cleanup());
 
@@ -34,7 +34,7 @@ function renderPage() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
         <QueryClientProvider client={client}>
-            <CalcularPage />
+            <CalculatePage />
         </QueryClientProvider>,
     );
 }

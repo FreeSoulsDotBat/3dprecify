@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 
-import { CalcularPage } from "./calcular-page";
+import { CalculatePage } from "./calcular-page";
 
 // US5/T024 — the catalog pickers: premium sellers pick a saved filament/printer and the fields
 // pre-fill (staying editable); free/signed-out users see NO picker (SC-310 — the manual flow is
@@ -58,7 +58,7 @@ function renderPage() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
         <QueryClientProvider client={client}>
-            <CalcularPage />
+            <CalculatePage />
         </QueryClientProvider>,
     );
 }

@@ -1,7 +1,7 @@
 {
     "generatedAt": "2026-09-02",
     "totalComments": 7389,
-    "totalLines": 39093,
+    "totalLines": 39106,
     "files": {
         "apps/web/src/app/app-shell.tsx": {
             "longestBlock": 9,
@@ -147,10 +147,6 @@
             "longestBlock": 5,
             "proseBlocks": 2
         },
-        "apps/web/src/features/calculator/aviso-de-saida.ts": {
-            "longestBlock": 2,
-            "proseBlocks": 0
-        },
         "apps/web/src/features/calculator/calculator-form.tsx": {
             "longestBlock": 2,
             "proseBlocks": 0
@@ -187,17 +183,17 @@
             "longestBlock": 6,
             "proseBlocks": 4
         },
-        "apps/web/src/features/calculator/form-atoms/campo-aviso.tsx": {
+        "apps/web/src/features/calculator/form-atoms/field-notice.tsx": {
             "longestBlock": 4,
             "proseBlocks": 1
-        },
-        "apps/web/src/features/calculator/form-atoms/campo-de-horas.tsx": {
-            "longestBlock": 2,
-            "proseBlocks": 0
         },
         "apps/web/src/features/calculator/form-atoms/form-styles.ts": {
             "longestBlock": 4,
             "proseBlocks": 3
+        },
+        "apps/web/src/features/calculator/form-atoms/hours-field.tsx": {
+            "longestBlock": 2,
+            "proseBlocks": 0
         },
         "apps/web/src/features/calculator/form-atoms/section-title.tsx": {
             "longestBlock": 2,
@@ -210,10 +206,6 @@
         "apps/web/src/features/calculator/form-logic/price-level.ts": {
             "longestBlock": 4,
             "proseBlocks": 3
-        },
-        "apps/web/src/features/calculator/form-molecules/aviso-de-resultado.tsx": {
-            "longestBlock": 8,
-            "proseBlocks": 2
         },
         "apps/web/src/features/calculator/form-molecules/channel-fee-field.tsx": {
             "longestBlock": 9,
@@ -237,6 +229,10 @@
         },
         "apps/web/src/features/calculator/form-molecules/other-cost-row.tsx": {
             "longestBlock": 4,
+            "proseBlocks": 2
+        },
+        "apps/web/src/features/calculator/form-molecules/result-notice.tsx": {
+            "longestBlock": 8,
             "proseBlocks": 2
         },
         "apps/web/src/features/calculator/form-molecules/surcharge-checkbox.tsx": {
@@ -310,6 +306,10 @@
         "apps/web/src/features/calculator/time-input.ts": {
             "longestBlock": 9,
             "proseBlocks": 5
+        },
+        "apps/web/src/features/calculator/use-unsaved-changes-warning.ts": {
+            "longestBlock": 2,
+            "proseBlocks": 0
         },
         "apps/web/src/features/catalog/catalog-controls.tsx": {
             "longestBlock": 4,
@@ -591,6 +591,10 @@
             "longestBlock": 7,
             "proseBlocks": 14
         },
+        "apps/web/src/shared/billing/didactic-empty.tsx": {
+            "longestBlock": 3,
+            "proseBlocks": 1
+        },
         "apps/web/src/shared/billing/plans.ts": {
             "longestBlock": 6,
             "proseBlocks": 1
@@ -610,10 +614,6 @@
         "apps/web/src/shared/billing/teaser-upgrade.tsx": {
             "longestBlock": 9,
             "proseBlocks": 5
-        },
-        "apps/web/src/shared/billing/vazio-didatico.tsx": {
-            "longestBlock": 3,
-            "proseBlocks": 1
         },
         "apps/web/src/shared/fee-catalog/category-tree.ts": {
             "longestBlock": 8,
@@ -703,13 +703,13 @@
             "longestBlock": 3,
             "proseBlocks": 1
         },
-        "apps/web/src/shared/lib/plausibilidade.ts": {
-            "longestBlock": 7,
-            "proseBlocks": 9
-        },
         "apps/web/src/shared/lib/plausibility-dismiss-store.ts": {
             "longestBlock": 8,
             "proseBlocks": 1
+        },
+        "apps/web/src/shared/lib/plausibility.ts": {
+            "longestBlock": 7,
+            "proseBlocks": 9
         },
         "apps/web/src/shared/lib/save-file.ts": {
             "longestBlock": 7,
@@ -719,10 +719,6 @@
             "longestBlock": 9,
             "proseBlocks": 2
         },
-        "apps/web/src/shared/lib/use-aviso-de-campo.ts": {
-            "longestBlock": 5,
-            "proseBlocks": 2
-        },
         "apps/web/src/shared/lib/use-cached-preload.ts": {
             "longestBlock": 8,
             "proseBlocks": 2
@@ -730,6 +726,10 @@
         "apps/web/src/shared/lib/use-debounced-value.ts": {
             "longestBlock": 3,
             "proseBlocks": 1
+        },
+        "apps/web/src/shared/lib/use-field-warning.ts": {
+            "longestBlock": 5,
+            "proseBlocks": 2
         },
         "apps/web/src/shared/lib/use-is-wide.ts": {
             "longestBlock": 2,
@@ -758,10 +758,6 @@
         "apps/web/src/shared/ui/alert.tsx": {
             "longestBlock": 2,
             "proseBlocks": 0
-        },
-        "apps/web/src/shared/ui/aviso.tsx": {
-            "longestBlock": 4,
-            "proseBlocks": 2
         },
         "apps/web/src/shared/ui/badge.tsx": {
             "longestBlock": 1,
@@ -795,10 +791,6 @@
             "longestBlock": 7,
             "proseBlocks": 1
         },
-        "apps/web/src/shared/ui/grafismo.tsx": {
-            "longestBlock": 3,
-            "proseBlocks": 1
-        },
         "apps/web/src/shared/ui/icon.tsx": {
             "longestBlock": 5,
             "proseBlocks": 2
@@ -819,9 +811,17 @@
             "longestBlock": 6,
             "proseBlocks": 3
         },
+        "apps/web/src/shared/ui/notice.tsx": {
+            "longestBlock": 4,
+            "proseBlocks": 2
+        },
         "apps/web/src/shared/ui/number-field.tsx": {
             "longestBlock": 6,
             "proseBlocks": 3
+        },
+        "apps/web/src/shared/ui/ornament.tsx": {
+            "longestBlock": 3,
+            "proseBlocks": 1
         },
         "apps/web/src/shared/ui/plist.tsx": {
             "longestBlock": 5,

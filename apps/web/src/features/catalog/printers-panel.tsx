@@ -24,7 +24,7 @@ import { PrinterForm } from "./printer-form";
 // printer read cache + online-only write mutations + the printer form. 019/PR-B (T044/T045): same
 // `gate` wiring as the sibling — presentation AND the create/update barrier by absence.
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 const cf = messages.catalogForm;
 
 export function PrintersPanel() {
@@ -44,17 +44,17 @@ export function PrintersPanel() {
     return (
         <CatalogPanel<PrinterOut, PrinterFormValues, PrinterIn>
             list={list}
-            detailKicker={catalogo.detailPrinter}
+            detailKicker={catalog.detailPrinter}
             feature="printers"
             gate={gate}
             copy={{
-                addLabel: catalogo.addPrinter,
-                emptyTitle: catalogo.emptyPrintersTitle,
-                emptyBody: catalogo.emptyPrintersBody,
+                addLabel: catalog.addPrinter,
+                emptyTitle: catalog.emptyPrintersTitle,
+                emptyBody: catalog.emptyPrintersBody,
                 newTitle: cf.newPrinter,
                 editTitle: cf.editPrinter,
                 savedToast: cf.savedPrinter,
-                count: (n) => catalogo.countPrinters.replace("{n}", String(n)),
+                count: (n) => catalog.countPrinters.replace("{n}", String(n)),
             }}
             rowName={(p) => p.name}
             rowSummary={printerSummary}

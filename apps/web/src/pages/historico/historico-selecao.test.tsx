@@ -49,7 +49,7 @@ import type { HistoryItem } from "@/entities/history/outbox";
 import { installMatchMedia, VIEWPORT } from "@/shared/lib/match-media.test-helper";
 import { useSessionStore } from "@/shared/session/session-store";
 
-import { HistoricoPage } from "./historico-page";
+import { HistoryPage } from "./historico-page";
 
 function item(over: Partial<HistoryItem> = {}): HistoryItem {
     return {
@@ -102,7 +102,7 @@ afterEach(() => {
 describe("Orçamentos — o card aberto se declara (018/A1)", () => {
     it("marca APENAS o card do registro que está aberto à direita", () => {
         searchMock.mockReturnValue({ snapshot: "b" });
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         const abertos = document.querySelectorAll('[aria-current="true"]');
         expect(abertos).toHaveLength(1);
@@ -112,14 +112,14 @@ describe("Orçamentos — o card aberto se declara (018/A1)", () => {
 
     it("sem nada aberto, nenhum card se declara escolhido", () => {
         searchMock.mockReturnValue({});
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
         expect(document.querySelectorAll('[aria-current="true"]')).toHaveLength(0);
     });
 
     it("no mobile não há lista para marcar — `?snapshot=` toma a tela inteira", () => {
         mm.setWidth(VIEWPORT.belowCut);
         searchMock.mockReturnValue({ snapshot: "b" });
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
         // A lista nem existe nesse ramo: o detalhe é a página.
         expect(screen.queryByText("Cliente Ana")).not.toBeInTheDocument();
     });

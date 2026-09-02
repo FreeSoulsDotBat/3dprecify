@@ -14,7 +14,7 @@ afterEach(() => cleanup());
 const cf = messages.catalogForm;
 const fields = messages.calculator.fields;
 const validation = messages.calculator.validation;
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 const field = (name: string) => screen.getByRole("textbox", { name });
 
@@ -104,9 +104,7 @@ describe("PrinterForm — os cinco estados do gate (019/PR-B T045, ex-013/FB-02)
             within(frozen).getByRole("textbox", { name: fields.machineLifetime }),
         ).toBeDisabled();
         expect(within(frozen).getByRole("textbox", { name: fields.avgPower })).toBeDisabled();
-        expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
-            catalogo.reactivateBody,
-        );
+        expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(catalog.reactivateBody);
 
         const saveBtn = screen.getByRole("button", { name: cf.save });
         expect(saveBtn).toBeVisible();

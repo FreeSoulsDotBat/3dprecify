@@ -98,10 +98,10 @@ describe("016/PR-F — a curadoria desta fatia no artefato servido", () => {
         });
 
         it("nenhuma literal de versão sobrou neste arquivo (o guarda que se guarda)", () => {
-            const fonte = readFileSync(new URL(import.meta.url), "utf8");
+            const source = readFileSync(new URL(import.meta.url), "utf8");
             // procura por uma data-versão cravada em aspas; a regex do teste (ii) não casa porque lá ela
             // é uma expressão regular, não uma string literal de versão.
-            expect(fonte).not.toMatch(/"\d{4}-\d{2}-\d{2}\.\d+"/);
+            expect(source).not.toMatch(/"\d{4}-\d{2}-\d{2}\.\d+"/);
         });
     });
 

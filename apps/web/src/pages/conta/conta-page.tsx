@@ -292,7 +292,7 @@ function PrivacySection() {
     );
 }
 
-export function ContaPage() {
+export function AccountPage() {
     // E6/T013/T015: MP's `back_url` returns here as `/conta?checkout=retorno` (§0.4/§10-F5 — a
     // 1-segment route, never `/conta/assinatura/retorno` under `base:'./'`). That state is a full
     // takeover of the page — the return surface polls server truth on its own (checkout-return.tsx);

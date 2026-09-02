@@ -80,10 +80,10 @@ vi.mock("@/shared/fee-catalog", async (importOriginal) => {
     };
 });
 
-import { CatalogoPage } from "./catalogo-page";
+import { CatalogPage } from "./catalogo-page";
 
 const tb = messages.billing;
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 afterEach(() => {
     cleanup();
@@ -101,36 +101,36 @@ describe("Catálogo tab — FREE signed-in: a MESMA IA, com o vazio didático (0
     });
 
     it("mostra o tablist inteiro — nunca uma tela substituta", () => {
-        render(<CatalogoPage />);
-        expect(screen.getByRole("tablist", { name: catalogo.tabsLabel })).toBeInTheDocument();
+        render(<CatalogPage />);
+        expect(screen.getByRole("tablist", { name: catalog.tabsLabel })).toBeInTheDocument();
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     });
 
     it("o vazio didático explica a feature — mesmo título/frase de quem paga, verbatim (T042)", () => {
-        render(<CatalogoPage />);
+        render(<CatalogPage />);
         const vazio = screen.getByTestId("vazio-didatico");
-        expect(vazio).toHaveTextContent(catalogo.emptyFilamentsTitle);
-        expect(vazio).toHaveTextContent(catalogo.educationalFilamentsBody);
+        expect(vazio).toHaveTextContent(catalog.emptyFilamentsTitle);
+        expect(vazio).toHaveTextContent(catalog.educationalFilamentsBody);
     });
 
     it("exatamente UM convite 'Assinar Premium', levando à oferta direto — sem preço-de-checkout, sem data", () => {
-        render(<CatalogoPage />);
+        render(<CatalogPage />);
         const links = screen.getAllByRole("link", { name: tb.subscribeAction });
         expect(links).toHaveLength(1);
         expect(links[0]).toHaveAttribute("href", "/conta?assinar=1");
 
         // E6/US7 — só os três preços praticados, nunca uma urgência/desconto fabricado.
-        const texto = document.body.textContent ?? "";
-        for (const n of texto.match(/\d+[.,]\d{2}/g) ?? []) {
+        const text = document.body.textContent ?? "";
+        for (const n of text.match(/\d+[.,]\d{2}/g) ?? []) {
             expect(["15,99", "12,99", "155,88"]).toContain(n);
         }
-        expect(texto).not.toMatch(/\b(últimas|só hoje|última chance|aproveite)\b/i);
-        expect(texto).not.toMatch(/191,88/);
-        expect(texto).not.toMatch(/\d{2}\/\d{2}|\bem breve\b/i); // no date promise
+        expect(text).not.toMatch(/\b(últimas|só hoje|última chance|aproveite)\b/i);
+        expect(text).not.toMatch(/191,88/);
+        expect(text).not.toMatch(/\d{2}\/\d{2}|\bem breve\b/i); // no date promise
     });
 
     it("nothing persists and no success is faked (there is nothing to dismiss)", () => {
-        render(<CatalogoPage />);
+        render(<CatalogPage />);
         expect(idleMutation.mutateAsync).not.toHaveBeenCalled();
         expect(screen.queryByText(messages.catalogForm.savedFilament)).not.toBeInTheDocument();
     });
@@ -143,8 +143,8 @@ describe("Catálogo tab — SIGNED-OUT: a MESMA IA, o convite passa pelo sign-in
     });
 
     it("mostra o mesmo tablist + vazio didático, e o convite carrega a intenção de voltar", () => {
-        render(<CatalogoPage />);
-        expect(screen.getByRole("tablist", { name: catalogo.tabsLabel })).toBeInTheDocument();
+        render(<CatalogPage />);
+        expect(screen.getByRole("tablist", { name: catalog.tabsLabel })).toBeInTheDocument();
         expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
 
         const cta = screen.getByRole("link", { name: tb.subscribeAction });
@@ -159,7 +159,7 @@ describe("Catálogo tab — premium ativo: tabs SEM vazio didático (regression 
             user: { uid: "u-1", email: "u@x.dev" } as never,
         });
         useEntitlementMock.mockReturnValue({ data: { status: "active" }, isLoading: false });
-        render(<CatalogoPage />);
+        render(<CatalogPage />);
 
         expect(screen.getByRole("tablist")).toBeInTheDocument();
         expect(screen.queryByTestId("vazio-didatico")).not.toBeInTheDocument();

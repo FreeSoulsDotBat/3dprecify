@@ -20,7 +20,7 @@ import { FilamentForm } from "./filament-form";
 // `useIsWide` responder `false` sem `matchMedia`: o silêncio do jsdom é o que garante que a suíte
 // inteira do app continue exercitando o ramo mobile sem que ninguém precise se lembrar disso.
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 const cf = messages.catalogForm;
 
 // O material entra no texto que a busca varre (`filamentSummary`), então ele precisa ser o material
@@ -39,13 +39,13 @@ function fil(id: string, name: string, material = "PLA", cost = "110.00"): Filam
 }
 
 const copy = {
-    addLabel: catalogo.addFilament,
-    emptyTitle: catalogo.emptyFilamentsTitle,
-    emptyBody: catalogo.emptyFilamentsBody,
+    addLabel: catalog.addFilament,
+    emptyTitle: catalog.emptyFilamentsTitle,
+    emptyBody: catalog.emptyFilamentsBody,
     newTitle: cf.newFilament,
     editTitle: cf.editFilament,
     savedToast: cf.savedFilament,
-    count: (n: number) => catalogo.countFilaments.replace("{n}", String(n)),
+    count: (n: number) => catalog.countFilaments.replace("{n}", String(n)),
 };
 
 function listState(items: FilamentOut[]): CatalogListState<FilamentOut> {
@@ -60,7 +60,7 @@ function renderPanel(items: FilamentOut[], over: Record<string, unknown> = {}) {
             copy={copy}
             feature="filaments"
             gate="active"
-            detailKicker={catalogo.detailFilament}
+            detailKicker={catalog.detailFilament}
             rowName={(f) => f.name}
             rowSummary={filamentSummary}
             emptyForm={emptyFilamentForm}
@@ -92,7 +92,7 @@ describe("Catálogo — mestre-detalhe (018/US1)", () => {
         expect(screen.getByTestId("master-list")).toBeInTheDocument();
         const ficha = screen.getByTestId("detail-panel");
         expect(within(ficha).getByRole("heading", { name: "PLA Prata" })).toBeInTheDocument();
-        expect(within(ficha).getByText(catalogo.detailFilament)).toBeInTheDocument();
+        expect(within(ficha).getByText(catalog.detailFilament)).toBeInTheDocument();
     });
 
     it("clicar num card TROCA a ficha — e não navega para lugar nenhum", async () => {
@@ -129,17 +129,15 @@ describe("Catálogo — mestre-detalhe (018/US1)", () => {
         const user = userEvent.setup();
         renderPanel([fil("f1", "PLA Prata"), fil("f2", "PETG Preto", "PETG")]);
 
-        await user.type(screen.getByLabelText(catalogo.searchLabel), "PETG");
+        await user.type(screen.getByLabelText(catalog.searchLabel), "PETG");
         expect(screen.getAllByTestId("master-item")).toHaveLength(1);
 
-        await user.clear(screen.getByLabelText(catalogo.searchLabel));
-        await user.type(screen.getByLabelText(catalogo.searchLabel), "zzz");
+        await user.clear(screen.getByLabelText(catalog.searchLabel));
+        await user.type(screen.getByLabelText(catalog.searchLabel), "zzz");
         expect(screen.queryByTestId("master-item")).not.toBeInTheDocument();
-        expect(
-            screen.getByText(catalogo.searchEmpty.replace("{termo}", "zzz")),
-        ).toBeInTheDocument();
+        expect(screen.getByText(catalog.searchEmpty.replace("{termo}", "zzz"))).toBeInTheDocument();
         // O vazio do CATÁLOGO diria outra coisa — e seria mentira sobre os dados do vendedor.
-        expect(screen.queryByText(catalogo.emptyFilamentsTitle)).not.toBeInTheDocument();
+        expect(screen.queryByText(catalog.emptyFilamentsTitle)).not.toBeInTheDocument();
     });
 
     // 019/PR-F (T098) — a ressalva `staleHint` por linha ("pode estar desatualizada") saiu dos DOIS
@@ -148,8 +146,8 @@ describe("Catálogo — mestre-detalhe (018/US1)", () => {
         const items = [fil("f1", "PLA Prata"), fil("f2", "PETG Preto", "PETG")];
         renderPanel(items, { list: { ...listState(items), stale: true } });
 
-        expect(screen.getByText(catalogo.offlineTitle)).toBeInTheDocument();
-        expect(screen.queryByText(catalogo.staleHint)).not.toBeInTheDocument();
+        expect(screen.getByText(catalog.offlineTitle)).toBeInTheDocument();
+        expect(screen.queryByText(catalog.staleHint)).not.toBeInTheDocument();
     });
 
     it("a seleção é derivada da lista atual: filtrar o item aberto não deixa ficha órfã", async () => {
@@ -157,7 +155,7 @@ describe("Catálogo — mestre-detalhe (018/US1)", () => {
         renderPanel([fil("f1", "PLA Prata"), fil("f2", "PETG Preto", "PETG")]);
 
         await user.click(screen.getAllByTestId("master-item")[1]); // abre PETG
-        await user.type(screen.getByLabelText(catalogo.searchLabel), "PLA");
+        await user.type(screen.getByLabelText(catalog.searchLabel), "PLA");
 
         const ficha = screen.getByTestId("detail-panel");
         expect(within(ficha).getByRole("heading", { name: "PLA Prata" })).toBeInTheDocument();
@@ -180,10 +178,10 @@ describe("Catálogo — mestre-detalhe (018/US1)", () => {
                     stale: false,
                     refetch: vi.fn(),
                 }}
-                copy={{ ...copy, addLabel: catalogo.addProduct }}
+                copy={{ ...copy, addLabel: catalog.addProduct }}
                 feature="products"
                 gate="active"
-                detailKicker={catalogo.detailProduct}
+                detailKicker={catalog.detailProduct}
                 rowName={(p) => p.name}
                 rowSummary={() => "42 g"}
                 onCreateNavigate={vi.fn()}
@@ -196,7 +194,7 @@ describe("Catálogo — mestre-detalhe (018/US1)", () => {
         const ficha = screen.getByTestId("detail-panel");
         // Nenhum campo de formulário na ficha de produto — o formulário completo continua na página.
         expect(within(ficha).queryByLabelText(/^Nome/i)).not.toBeInTheDocument();
-        await user.click(within(ficha).getByRole("button", { name: catalogo.detailOpenEditor }));
+        await user.click(within(ficha).getByRole("button", { name: catalog.detailOpenEditor }));
         expect(onEditNavigate).toHaveBeenCalledWith(prod);
     });
 
@@ -207,6 +205,6 @@ describe("Catálogo — mestre-detalhe (018/US1)", () => {
 
         expect(screen.queryByTestId("master-list")).not.toBeInTheDocument();
         expect(screen.queryByTestId("detail-panel")).not.toBeInTheDocument();
-        expect(screen.queryByLabelText(catalogo.searchLabel)).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(catalog.searchLabel)).not.toBeInTheDocument();
     });
 });

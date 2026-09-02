@@ -8,10 +8,10 @@ import {
 } from "react-hook-form";
 
 import type { CalcFieldMeta, CalcFormValues } from "@/features/calculator/calculator-schema";
-import { useAvisoDeCampo } from "@/shared/lib/use-aviso-de-campo";
+import { useFieldWarning } from "@/shared/lib/use-field-warning";
 import { Field, InfoTip, NumberField } from "@/shared/ui";
 
-import { CampoAviso } from "../form-atoms/campo-aviso";
+import { FieldNotice } from "../form-atoms/field-notice";
 
 /** 019/PR-C (T056) — o corpo de `ControlledField`, extraído em componente PRÓPRIO (nome maiúsculo)
  *  para que `useAvisoDeCampo` (um hook de verdade — `useRef`/`useState`/zustand) seja chamado
@@ -27,7 +27,7 @@ function ControlledFieldBody({
     field: ControllerRenderProps<CalcFormValues, CalcFieldMeta["name"]>;
     fieldState: ControllerFieldState;
 }) {
-    const aviso = useAvisoDeCampo(meta.name, String(field.value ?? ""), Boolean(fieldState.error));
+    const notice = useFieldWarning(meta.name, String(field.value ?? ""), Boolean(fieldState.error));
     return (
         // 019/PR-C (T056, prancheta 14f) — o `<Aviso>` é IRMÃO do `Field`, dentro do mesmo wrapper de
         // célula: num grid `auto-fit` (`.tf-costs-grid`), cada filho DIRETO é um item — dois elementos
@@ -53,14 +53,14 @@ function ControlledFieldBody({
                         onChange={field.onChange}
                         onBlur={() => {
                             field.onBlur();
-                            aviso.onBlur();
+                            notice.onBlur();
                         }}
                         ref={field.ref}
                         error={Boolean(fieldState.error)}
                     />
                 )}
             </Field>
-            <CampoAviso aviso={aviso} testId={`aviso-${meta.name}`} />
+            <FieldNotice notice={notice} testId={`aviso-${meta.name}`} />
         </div>
     );
 }

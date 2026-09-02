@@ -57,7 +57,7 @@ import { useSessionStore } from "@/shared/session/session-store";
 import type { SnapshotIn } from "@/shared/api/generated";
 import type { FrozenSnapshotPayload } from "@/entities/history/frozen-payload";
 
-import { CalcularPage } from "./calcular-page";
+import { CalculatePage } from "./calcular-page";
 
 const s = messages.scenarios;
 const h = messages.history;
@@ -137,7 +137,7 @@ function renderPage() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
         <QueryClientProvider client={client}>
-            <CalcularPage />
+            <CalculatePage />
         </QueryClientProvider>,
     );
 }

@@ -64,12 +64,12 @@ describe("a legenda do painel diz a verdade de cada estado", () => {
     });
 
     it("cancelada: 'ativo até' e 'não renova' — e NUNCA 'expirado'", () => {
-        const texto = planDetail(cancelada(false))!;
-        expect(texto).toContain("31/12/2026");
-        expect(texto).toContain(b.planWontRenew);
+        const text = planDetail(cancelada(false))!;
+        expect(text).toContain("31/12/2026");
+        expect(text).toContain(b.planWontRenew);
         // O vendedor pagou por este período. Chamá-lo de expirado seria a hostilidade que a US4 impede,
         // e nenhuma asserção de presença acima notaria a palavra errada convivendo com as certas.
-        expect(texto).not.toContain(t.planLapsed);
+        expect(text).not.toContain(t.planLapsed);
     });
 
     it("carência: o badge SEGUE Premium — a queda ainda não aconteceu", () => {
@@ -208,11 +208,11 @@ describe("o reconhecimento do cancelamento (T028/B2)", () => {
         // Este teste prende a correção onde ela mora: `useCancelSubscription` empurra o toast na sua
         // PRÓPRIA `onSuccess`, que não depende de nenhum componente continuar montado.
         const { useCancelSubscription } = await import("./use-subscription");
-        const fonte = useCancelSubscription.toString();
-        expect(fonte).toContain("toast");
+        const source = useCancelSubscription.toString();
+        expect(source).toContain("toast");
         // E a data vem da RESPOSTA, não da tela: repetir um valor defasado confirmaria uma promessa
         // que o servidor não fez.
-        expect(fonte).toContain("currentPeriodEnd");
+        expect(source).toContain("currentPeriodEnd");
         // O diálogo, por sua vez, não pode voltar a depender de um callback de sucesso próprio.
         const { PlanActions: _ } = await import("./plan-panel");
         void _;

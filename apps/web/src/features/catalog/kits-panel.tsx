@@ -18,7 +18,7 @@ import { CatalogPanel } from "./catalog-panel";
 // 019/PR-B (T044) — o único dos quatro que ainda não lia `useEntitlement()` (não tinha faixa
 // lapsed nem vazio didático antes): ganha o MESMO `gate` dos irmãos agora.
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 export function KitsPanel() {
     const list = useBoms();
@@ -30,25 +30,25 @@ export function KitsPanel() {
     return (
         <CatalogPanel<BomOut, never>
             list={list}
-            detailKicker={catalogo.detailKit}
+            detailKicker={catalog.detailKit}
             feature="kits"
             gate={gate}
             copy={{
-                addLabel: catalogo.addKit,
-                emptyTitle: catalogo.emptyKitsTitle,
-                emptyBody: catalogo.emptyKitsBody,
-                newTitle: catalogo.addKit,
-                editTitle: catalogo.editKit,
+                addLabel: catalog.addKit,
+                emptyTitle: catalog.emptyKitsTitle,
+                emptyBody: catalog.emptyKitsBody,
+                newTitle: catalog.addKit,
+                editTitle: catalog.editKit,
                 savedToast: messages.bom.saved,
-                count: (n) => catalogo.countKits.replace("{n}", String(n)),
+                count: (n) => catalog.countKits.replace("{n}", String(n)),
             }}
             rowName={(k) => k.name}
-            rowSummary={(k) => catalogo.countKitPieces.replace("{n}", String(k.lines?.length ?? 0))}
+            rowSummary={(k) => catalog.countKitPieces.replace("{n}", String(k.lines?.length ?? 0))}
             // 019/PR-D (T076, prancheta 17e) — "{n} peças · salvo em {data}". O preço do kit fica FORA
             // desta fatia (T124: nenhuma função pronta de preço de kit na lista) — registrado no
             // relatório; a linha do kit não ganha `rowPrice`/`rowFlag`, só a meta.
             rowMeta={(k) =>
-                catalogo.kitMeta
+                catalog.kitMeta
                     .replace("{n}", String(k.lines?.length ?? 0))
                     .replace("{data}", formatDayMonthPtBr(k.updatedAt))
             }

@@ -9,7 +9,7 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 import { installMatchMedia, VIEWPORT } from "@/shared/lib/match-media.test-helper";
 import { useThemeStore } from "@/shared/ui";
 
-import { ContaPage } from "./conta-page";
+import { AccountPage } from "./conta-page";
 
 // 018/T045 — a Conta no desktop.
 //
@@ -62,7 +62,7 @@ describe("Conta — desktop (018/US4)", () => {
     afterEach(() => mm.restore());
 
     it("o tema vira um controle que NOMEIA as opções, e a ativa é a do store", () => {
-        render(<ContaPage />);
+        render(<AccountPage />);
         const grupo = screen.getByRole("radiogroup", { name: t.themeLabel });
         expect(grupo).toBeInTheDocument();
         expect(screen.getByRole("radio", { name: t.themeDark })).toHaveAttribute(
@@ -77,7 +77,7 @@ describe("Conta — desktop (018/US4)", () => {
 
     it("escolher a opção já ativa NÃO alterna o tema (um radio não é um interruptor)", async () => {
         const user = userEvent.setup();
-        render(<ContaPage />);
+        render(<AccountPage />);
         await user.click(screen.getByRole("radio", { name: t.themeDark }));
         expect(useThemeStore.getState().theme).toBe("dark");
 
@@ -86,7 +86,7 @@ describe("Conta — desktop (018/US4)", () => {
     });
 
     it("conta grátis recebe a oferta ABERTA na coluna do plano, sem precisar da gaveta", () => {
-        render(<ContaPage />);
+        render(<AccountPage />);
         // Por PAPEL, não por texto: o `OfferPanel` já nomeia seu próprio `fieldset` com um `<legend>`
         // `sr-only` de mesmo texto — o cartão precisa de um título VISÍVEL, e os dois coexistem
         // legitimamente (um é o nome do grupo de campos, o outro é o cabeçalho do cartão).
@@ -96,7 +96,7 @@ describe("Conta — desktop (018/US4)", () => {
     });
 
     it("o aviso de privacidade aparece com a redação já ratificada (FR-214)", () => {
-        render(<ContaPage />);
+        render(<AccountPage />);
         expect(screen.getByText(messages.privacy.title)).toBeInTheDocument();
         expect(screen.getByText(messages.privacy.google)).toBeInTheDocument();
     });
@@ -104,7 +104,7 @@ describe("Conta — desktop (018/US4)", () => {
     it("abaixo do corte o tema é o INTERRUPTOR de hoje — o mobile não se mexe", () => {
         mm.setWidth(VIEWPORT.belowCut);
         cleanup();
-        render(<ContaPage />);
+        render(<AccountPage />);
         expect(screen.queryByRole("radiogroup", { name: t.themeLabel })).not.toBeInTheDocument();
         expect(screen.getByRole("switch")).toBeInTheDocument();
         // …e a oferta volta a ser assunto da gaveta.
@@ -128,7 +128,7 @@ describe("Conta — desktop, chegando por um teaser (?assinar=1)", () => {
     });
 
     it("a oferta aparece UMA vez — na coluna, sem gaveta por cima", () => {
-        render(<ContaPage />);
+        render(<AccountPage />);
         expect(document.getElementById("tf-conta-oferta")).toBeInTheDocument();
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
         // a medida do e2e: 2 rádios de período por oferta; a duplicata dava 4

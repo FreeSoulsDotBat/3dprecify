@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 
-import { CalcularPage } from "./calcular-page";
+import { CalculatePage } from "./calcular-page";
 
 // 013/T013 (FA-03) — a visible per-field validation error must NOT survive a programmatic
 // `setValue` (catalog prefill / scenario reopen): RHF only re-validates a field it is TOLD to
@@ -49,7 +49,7 @@ function renderPage() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
         <QueryClientProvider client={client}>
-            <CalcularPage />
+            <CalculatePage />
         </QueryClientProvider>,
     );
 }

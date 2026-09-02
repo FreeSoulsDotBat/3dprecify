@@ -7,7 +7,7 @@ import { Alert, Button, PriceHero } from "@/shared/ui";
 // block that reads it (PriceHero + o alerta de "parado" + as duas escolhas do 16b·2 + o aviso K3).
 // No state/effect moved — every handler here is a prop closed over by the caller.
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 const pf = messages.productForm;
 
 /** 019/PR-D (T076, prancheta 17g) — os quatro estados do cabeçalho: fixado > parado > mudou > sem
@@ -32,10 +32,10 @@ export function productHeaderState({
     sellerFixedAt: string | null | undefined;
 }): { label: string; value: number | undefined; caption: string | undefined } {
     const label = isFixed
-        ? catalogo.fixedByYou
+        ? catalog.fixedByYou
         : needsAttention
-          ? catalogo.stoppedPrice
-          : catalogo.suggestedRetail;
+          ? catalog.stoppedPrice
+          : catalog.suggestedRetail;
     const value = isFixed
         ? fixedPriceValue
         : needsAttention
@@ -43,21 +43,21 @@ export function productHeaderState({
           : todayPrice;
     const caption =
         isFixed && sellerFixedAt && todayPrice !== undefined
-            ? catalogo.capFixed
+            ? catalog.capFixed
                   .replace("{data}", formatDayMonthPtBr(sellerFixedAt))
                   .replace("{hoje}", formatBRL(todayPrice))
             : needsAttention && savedObservation
-              ? catalogo.capStopped.replace(
+              ? catalog.capStopped.replace(
                     "{data}",
                     formatDayMonthPtBr(savedObservation.observedAt),
                 )
               : priceChanged && savedObservation
-                ? catalogo.capRecalculated.replace(
+                ? catalog.capRecalculated.replace(
                       "{valor}",
                       formatBRL(savedObservation.observedPrice),
                   )
                 : !isFixed && !needsAttention && savedObservation
-                  ? catalogo.capUnchanged.replace(
+                  ? catalog.capUnchanged.replace(
                         "{data}",
                         formatDayMonthPtBr(savedObservation.observedAt),
                     )
@@ -128,12 +128,12 @@ export function ProductPriceHeader({
                                 onClick={onUnfix}
                                 loading={unfixLoading}
                             >
-                                {catalogo.unfix}
+                                {catalog.unfix}
                             </Button>
                         ) : undefined
                     }
                 >
-                    {catalogo.fixedOverNote
+                    {catalog.fixedOverNote
                         .replace("{hoje}", formatBRL(todayPrice))
                         .replace("{diff}", formatBRL(todayPrice - fixedPriceValue!))}
                 </Alert>
@@ -144,12 +144,12 @@ export function ProductPriceHeader({
             {active && priceChanged && savedObservation && (
                 <div className="flex flex-wrap gap-2">
                     <Button variant="secondary" onClick={onKeepPrice} loading={keepPriceLoading}>
-                        {catalogo.keepPrice.replace(
+                        {catalog.keepPrice.replace(
                             "{valor}",
                             formatBRL(savedObservation.observedPrice),
                         )}
                     </Button>
-                    <Button onClick={onAcceptNewPrice}>{catalogo.acceptNewPrice}</Button>
+                    <Button onClick={onAcceptNewPrice}>{catalog.acceptNewPrice}</Button>
                 </div>
             )}
 

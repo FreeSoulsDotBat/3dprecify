@@ -43,7 +43,7 @@ vi.mock("@/entities/user/use-entitlement", () => ({
 
 import { ProductsPanel } from "./products-panel";
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 function product(over: Partial<ProductOut> = {}): ProductOut {
     return {
@@ -107,21 +107,21 @@ describe("Produtos list — the K3 attention indicator", () => {
         );
         render(<ProductsPanel />);
 
-        expect(screen.getByText(catalogo.needsAttention)).toBeInTheDocument();
+        expect(screen.getByText(catalog.needsAttention)).toBeInTheDocument();
     });
 
     it("flags a product degraded by a deletion with the SAME words — one state, one remedy", () => {
         useProductsMock.mockReturnValue(listState([product({ filamentId: null })]));
         render(<ProductsPanel />);
 
-        expect(screen.getByText(catalogo.needsAttention)).toBeInTheDocument();
+        expect(screen.getByText(catalog.needsAttention)).toBeInTheDocument();
     });
 
     it("stays quiet on a fully linked product (SC-412)", () => {
         useProductsMock.mockReturnValue(listState([product()]));
         render(<ProductsPanel />);
 
-        expect(screen.queryByText(catalogo.needsAttention)).not.toBeInTheDocument();
+        expect(screen.queryByText(catalog.needsAttention)).not.toBeInTheDocument();
         expect(screen.getByText(/PLA Azul/)).toBeInTheDocument();
     });
 });

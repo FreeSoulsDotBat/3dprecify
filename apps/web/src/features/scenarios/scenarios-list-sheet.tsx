@@ -5,7 +5,7 @@ import { useDuplicateScenario, useScenarios } from "@/entities/scenario/use-scen
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import type { ScenarioOut } from "@/shared/api/generated";
 import { premiumGate, type PremiumGate } from "@/shared/billing/premium-gate";
-import { VazioDidatico } from "@/shared/billing/vazio-didatico";
+import { DidacticEmpty } from "@/shared/billing/didactic-empty";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { useOnline } from "@/shared/lib/use-online";
@@ -218,7 +218,7 @@ export function ScenariosList({
     // O convite (`TeaserUpgrade`, dentro do `VazioDidatico`) é o ÚNICO desta folha (FR-1906).
     if (showDoor) {
         return (
-            <VazioDidatico
+            <DidacticEmpty
                 feature="scenarios"
                 gate={doorGate}
                 action={

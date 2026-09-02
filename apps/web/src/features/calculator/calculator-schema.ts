@@ -491,7 +491,7 @@ export const FIELD_PRECISION: Partial<Record<CalcFieldName, number>> = Object.fr
 );
 
 /** 016/US8 (FR-910) — "com que frequência ela roda": 3 options, none typed (SC-906). */
-export const RITMO_OPTIONS: readonly SelectOption[] = [
+export const USAGE_RATE_OPTIONS: readonly SelectOption[] = [
     { value: "0", label: t.machineCost.paceOptions.few },
     { value: "1", label: t.machineCost.paceOptions.daily },
     { value: "2", label: t.machineCost.paceOptions.always },

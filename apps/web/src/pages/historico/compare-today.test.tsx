@@ -325,7 +325,7 @@ describe("016/T037 — a nota estrutural quando o congelado é de um modelo apos
 
         await screen.findByText(t.compareToday); // the comparison DID render
         expect(
-            screen.queryByText(/O modelo atual não tem mais esse campo/),
+            screen.queryByText(/O modelo atual não tem mais esse field/),
         ).not.toBeInTheDocument();
     });
 });

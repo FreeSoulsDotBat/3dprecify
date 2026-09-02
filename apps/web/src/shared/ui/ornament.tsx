@@ -1,11 +1,11 @@
 import { type CSSProperties, type HTMLAttributes } from "react";
 
-import "./grafismo.css";
+import "./ornament.css";
 
-export type GrafismoName = "arco" | "espada" | "linha-curva" | "onda";
+export type OrnamentName = "arco" | "espada" | "linha-curva" | "onda";
 
-export interface GrafismoProps extends HTMLAttributes<HTMLSpanElement> {
-    name: GrafismoName;
+export interface OrnamentProps extends HTMLAttributes<HTMLSpanElement> {
+    name: OrnamentName;
 }
 
 /**
@@ -13,7 +13,7 @@ export interface GrafismoProps extends HTMLAttributes<HTMLSpanElement> {
  * `currentColor` (CSS mask over the static SVG in `public/brand/grafismos`),
  * always `aria-hidden`, and reduced-motion safe (no animation).
  */
-export function Grafismo({ name, className = "", style, ...rest }: GrafismoProps) {
+export function Ornament({ name, className = "", style, ...rest }: OrnamentProps) {
     const vars = {
         "--tf-grafismo-src": `url("/brand/grafismos/${name}.svg")`,
         ...style,

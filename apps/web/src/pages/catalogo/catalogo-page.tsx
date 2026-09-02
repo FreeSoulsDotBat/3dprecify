@@ -39,15 +39,15 @@ import "./catalogo-page.css";
 // auth no `beforeLoad` do router (não mexido aqui); dentro dele o formulário agora nasce inerte
 // para qualquer `gate !== "active"`, não só `lapsed` (013/FB-02 só cobria o vencido).
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 type TabId = "filaments" | "printers" | "products" | "kits";
 
 const TABS: readonly { id: TabId; label: string }[] = [
-    { id: "filaments", label: catalogo.tabFilaments },
-    { id: "printers", label: catalogo.tabPrinters },
-    { id: "products", label: catalogo.tabProducts },
-    { id: "kits", label: catalogo.tabKits },
+    { id: "filaments", label: catalog.tabFilaments },
+    { id: "printers", label: catalog.tabPrinters },
+    { id: "products", label: catalog.tabProducts },
+    { id: "kits", label: catalog.tabKits },
 ];
 
 // 018/T010 — o `CatalogTabs` local virou `Segmented` em `shared/ui`: o MESMO comportamento de
@@ -59,7 +59,7 @@ function CatalogTabs({ active, onChange }: { active: TabId; onChange: (id: TabId
             options={TABS}
             value={active}
             onChange={onChange}
-            ariaLabel={catalogo.tabsLabel}
+            ariaLabel={catalog.tabsLabel}
             idPrefix="catalog-tab"
             controlsPrefix="catalog-panel"
             size="sm"
@@ -67,7 +67,7 @@ function CatalogTabs({ active, onChange }: { active: TabId; onChange: (id: TabId
     );
 }
 
-export function CatalogoPage() {
+export function CatalogPage() {
     // Landing tab: `?tab=products` (the product page returns here after a save) or `?tab=kits` (a
     // saved kit lands the seller on its list, E3/K2); otherwise Filamentos.
     const search = useSearch({ strict: false }) as { tab?: string; produto?: string };

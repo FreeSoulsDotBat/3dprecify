@@ -6,7 +6,7 @@ import { Table } from "@/shared/ui";
 
 import { captionText } from "./catalog-panel-styles";
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 // 019/PR-D (T076/T130, prancheta 16g) — 1024–1279px: `tf-table`, a coluna "Antes" é o "era R$ X" da
 // lista promovida a coluna, e um travessão (`tableNoChange`) onde a linha não mudou. Extracted
@@ -44,16 +44,16 @@ export function CatalogPanelDenseTable<TItem extends { id: string }>({
             <Table>
                 <thead>
                     <tr>
-                        <th scope="col">{catalogo.tableColName}</th>
+                        <th scope="col">{catalog.tableColName}</th>
                         <th scope="col" style={{ textAlign: "right" }}>
-                            {catalogo.tableColPrice}
+                            {catalog.tableColPrice}
                         </th>
                         <th scope="col" style={{ textAlign: "right" }}>
-                            {catalogo.tableColBefore}
+                            {catalog.tableColBefore}
                         </th>
-                        <th scope="col">{catalogo.tableColSavedAt}</th>
+                        <th scope="col">{catalog.tableColSavedAt}</th>
                         <th scope="col">
-                            <span className="sr-only">{catalogo.tableColActions}</span>
+                            <span className="sr-only">{catalog.tableColActions}</span>
                         </th>
                     </tr>
                 </thead>
@@ -81,7 +81,7 @@ export function CatalogPanelDenseTable<TItem extends { id: string }>({
                                     {price !== undefined ? formatBRL(price) : "—"}
                                 </td>
                                 <td className="tf-table__num tf-table__num--muted">
-                                    {was !== undefined ? formatBRL(was) : catalogo.tableNoChange}
+                                    {was !== undefined ? formatBRL(was) : catalog.tableNoChange}
                                 </td>
                                 <td>{rowMeta?.(item) ?? summaryOf(item)}</td>
                                 <td className="tf-table__actions">{rowActions(item)}</td>

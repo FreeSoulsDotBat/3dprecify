@@ -6,7 +6,7 @@ import { Button, Icon } from "@/shared/ui";
 
 import { captionText } from "./catalog-panel-styles";
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 // 019/PR-D (T076, prancheta 16a; achado do e2e T069) — a lista mobile (<1024px). Extracted verbatim
 // from `catalog-panel.tsx`'s final `else` branch. A 390px a lista É a `tf-plist` de
@@ -77,7 +77,7 @@ export function CatalogPanelMobileList<TItem extends { id: string }>({
                 só. */}
                                 {gate === "lapsed" && (
                                     <span className="tf-plist__meta truncate">
-                                        {catalogo.readOnlyHint}
+                                        {catalog.readOnlyHint}
                                     </span>
                                 )}
                             </span>
@@ -87,7 +87,7 @@ export function CatalogPanelMobileList<TItem extends { id: string }>({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                aria-label={`${catalogo.edit} ${nameOf(item)}`}
+                                aria-label={`${catalog.edit} ${nameOf(item)}`}
                                 onClick={() => openEdit(item)}
                             >
                                 <Icon name="pencil" size={18} aria-hidden />
@@ -96,7 +96,7 @@ export function CatalogPanelMobileList<TItem extends { id: string }>({
                                 <Button
                                     variant="ghost"
                                     size="sm"
-                                    aria-label={`${catalogo.duplicate} ${nameOf(item)}`}
+                                    aria-label={`${catalog.duplicate} ${nameOf(item)}`}
                                     onClick={() => onDuplicate(item)}
                                 >
                                     <Icon name="copy" size={18} aria-hidden />
@@ -105,7 +105,7 @@ export function CatalogPanelMobileList<TItem extends { id: string }>({
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                aria-label={`${catalogo.remove} ${nameOf(item)}`}
+                                aria-label={`${catalog.remove} ${nameOf(item)}`}
                                 // 013/FB-02 (T034 homologation nit): on lapsed, tapping delete must NOT open the
                                 // working destructive confirm and then 403 on submit — ux-catalog §3: "Never show a
                                 // delete/edit as *working* then fail — the intercept happens on tap, honestly." Edit

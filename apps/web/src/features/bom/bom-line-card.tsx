@@ -1,7 +1,7 @@
 import type { BomLineResult } from "@3dprecify/pricing-core";
 import type { ReactNode } from "react";
 
-import { avisoDeQuantidade } from "@/shared/lib/plausibilidade";
+import { quantityWarning } from "@/shared/lib/plausibility";
 import { formatBRL, parseDecimal } from "@/shared/lib/decimal-ptbr";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Button, Card, Icon, NumberField } from "@/shared/ui";
@@ -100,9 +100,9 @@ export function BomLineCard({
           (2.147.483.647) eram aceitas na digitação sem qualquer sinal. Ao SALVAR o produto se
           comporta bem, mas o vendedor só descobre lá. Aviso, nunca recusa: a peça continua no kit
           e o campo continua editável (ver `plausibilidade.ts`). */}
-            {avisoDeQuantidade(parseDecimal(quantityRaw)) !== null && (
+            {quantityWarning(parseDecimal(quantityRaw)) !== null && (
                 <p className="tf-field__aviso text-sm" data-testid="aviso-quantity">
-                    {avisoDeQuantidade(parseDecimal(quantityRaw))}
+                    {quantityWarning(parseDecimal(quantityRaw))}
                 </p>
             )}
             {invalid && <p className="text-sm text-[var(--text-muted)]">{t.lineInvalid}</p>}

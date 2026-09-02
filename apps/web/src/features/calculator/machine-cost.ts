@@ -6,14 +6,17 @@
 
 /** The three usage RITMOS the dono approved (h/ano) — índice 0 = "poucas horas por semana",
  *  1 = "quase todo dia", 2 = "praticamente o dia todo" (SC-906). */
-export const RITMOS_HORAS_ANO = [260, 1200, 3300] as const;
-export type RitmoIndex = 0 | 1 | 2;
+export const USAGE_RATE_HOURS_PER_YEAR = [260, 1200, 3300] as const;
+export type UsageRateIndex = 0 | 1 | 2;
 
 /** `machineLifetimeHours = ritmoHorasAno × paybackAnos` (arquitetura-016.md §7). Payback 3 anos
  *  dá os 780/3.600/9.900 aprovados pelo dono (SC-906). */
-export function deriveMachineLifetimeHours(ritmoIndex: RitmoIndex, paybackYears: number): number {
+export function deriveMachineLifetimeHours(
+    usageRateIndex: UsageRateIndex,
+    paybackYears: number,
+): number {
     const years = Number.isFinite(paybackYears) && paybackYears > 0 ? Math.trunc(paybackYears) : 0;
-    return RITMOS_HORAS_ANO[ritmoIndex] * years;
+    return USAGE_RATE_HOURS_PER_YEAR[usageRateIndex] * years;
 }
 
 /** R$/hora de impressão — o derivado "dito em voz alta" (US8-AC2). `0` quando a vida útil não é
@@ -32,15 +35,15 @@ export function costPerHour(machineValue: number, lifetimeHours: number): number
  * um payback salvo fora dessa faixa (um seletor futuro mais largo, ou dado editado à mão) ainda
  * seja reconhecido como ritmo quando genuinamente é um.
  */
-export function detectRitmoMode(
+export function detectUsageRateMode(
     machineLifetimeHours: number,
     maxPaybackYears = 10,
-): { ritmoIndex: RitmoIndex; paybackYears: number } | null {
+): { usageRateIndex: UsageRateIndex; paybackYears: number } | null {
     if (!Number.isFinite(machineLifetimeHours) || machineLifetimeHours <= 0) return null;
-    for (const ritmoIndex of [0, 1, 2] as const) {
+    for (const usageRateIndex of [0, 1, 2] as const) {
         for (let years = 1; years <= maxPaybackYears; years++) {
-            if (RITMOS_HORAS_ANO[ritmoIndex] * years === machineLifetimeHours) {
-                return { ritmoIndex, paybackYears: years };
+            if (USAGE_RATE_HOURS_PER_YEAR[usageRateIndex] * years === machineLifetimeHours) {
+                return { usageRateIndex, paybackYears: years };
             }
         }
     }

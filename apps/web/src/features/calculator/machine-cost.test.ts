@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
     costPerHour,
     deriveMachineLifetimeHours,
-    detectRitmoMode,
-    RITMOS_HORAS_ANO,
+    detectUsageRateMode,
+    USAGE_RATE_HOURS_PER_YEAR,
 } from "./machine-cost";
 
 // 016/US8 (T021, FR-910, SC-906) — the RITMOS × payback derivation, red first: this module does
@@ -12,7 +12,7 @@ import {
 
 describe("machine-cost — RITMOS × payback derivation (US8, arquitetura-016.md §7)", () => {
     it("RITMOS = [260, 1200, 3300] h/ano (aprovados pelo dono)", () => {
-        expect(RITMOS_HORAS_ANO).toEqual([260, 1200, 3300]);
+        expect(USAGE_RATE_HOURS_PER_YEAR).toEqual([260, 1200, 3300]);
     });
 
     it("payback 3 anos deriva 780 / 3.600 / 9.900 h (SC-906)", () => {
@@ -28,21 +28,21 @@ describe("machine-cost — RITMOS × payback derivation (US8, arquitetura-016.md
     });
 
     it("um machineLifetimeHours salvo que bate ritmo × payback inteiro é detectado", () => {
-        expect(detectRitmoMode(780)).toEqual({ ritmoIndex: 0, paybackYears: 3 });
-        expect(detectRitmoMode(3600)).toEqual({ ritmoIndex: 1, paybackYears: 3 });
-        expect(detectRitmoMode(9900)).toEqual({ ritmoIndex: 2, paybackYears: 3 });
+        expect(detectUsageRateMode(780)).toEqual({ usageRateIndex: 0, paybackYears: 3 });
+        expect(detectUsageRateMode(3600)).toEqual({ usageRateIndex: 1, paybackYears: 3 });
+        expect(detectUsageRateMode(9900)).toEqual({ usageRateIndex: 2, paybackYears: 3 });
         // outro payback do mesmo ritmo também é reconhecido.
-        expect(detectRitmoMode(1200)).toEqual({ ritmoIndex: 1, paybackYears: 1 });
+        expect(detectUsageRateMode(1200)).toEqual({ usageRateIndex: 1, paybackYears: 1 });
     });
 
     it("2.000h salvas (o default do seed) não batem ritmo×payback inteiro nenhum ⇒ modo ajustar", () => {
-        expect(detectRitmoMode(2000)).toBeNull();
+        expect(detectUsageRateMode(2000)).toBeNull();
     });
 
     it("zero/negativo/não-finito ⇒ ajustar (null)", () => {
-        expect(detectRitmoMode(0)).toBeNull();
-        expect(detectRitmoMode(-100)).toBeNull();
-        expect(detectRitmoMode(Number.NaN)).toBeNull();
+        expect(detectUsageRateMode(0)).toBeNull();
+        expect(detectUsageRateMode(-100)).toBeNull();
+        expect(detectUsageRateMode(Number.NaN)).toBeNull();
     });
 
     it("costPerHour nunca devolve NaN/Infinity para uma vida útil inválida", () => {

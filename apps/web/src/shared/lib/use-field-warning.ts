@@ -1,11 +1,11 @@
 import { useRef, useState } from "react";
 
-import { avisoDeCampo, licaoDeCampo } from "./plausibilidade";
+import { fieldWarning, fieldLesson } from "./plausibility";
 import { dismissKey, usePlausibilityDismissStore } from "./plausibility-dismiss-store";
 
-export interface UseAvisoDeCampoResult {
+export interface UseFieldWarningResult {
     /** O texto do aviso a mostrar, ou `null` quando nada há para avisar (ou já foi dispensado). */
-    aviso: string | null;
+    notice: string | null;
     /** Espelha o `temErro` recebido — a tela usa para decidir se oferece "Entendi" (14b: não). */
     comErro: boolean;
     /** Handler de blur do campo: nasce aqui o aviso (14a — "ao sair do campo", nunca a cada tecla). */
@@ -19,11 +19,11 @@ export interface UseAvisoDeCampoResult {
  *   o aviso, e é essa a diferença entre "dispara a cada tecla" e "dispara ao sair do campo".
  *   Um valor novo traz o aviso de volta mesmo já dispensado.
  */
-export function useAvisoDeCampo(
+export function useFieldWarning(
     nome: string,
     valorBruto: string,
     temErro: boolean,
-): UseAvisoDeCampoResult {
+): UseFieldWarningResult {
     const latest = useRef(valorBruto);
     latest.current = valorBruto;
 
@@ -32,21 +32,21 @@ export function useAvisoDeCampo(
     const dismissed = usePlausibilityDismissStore((s) => s.dismissed);
     const dismiss = usePlausibilityDismissStore((s) => s.dismiss);
 
-    const texto = committed === null ? null : avisoDeCampo(nome, committed, temErro);
+    const text = committed === null ? null : fieldWarning(nome, committed, temErro);
     const key = committed === null ? null : dismissKey(nome, committed);
     // Um aviso que acompanha uma recusa nunca é dispensável (14b) — reaparece enquanto a recusa
     // existir, mesmo que o mesmo par campo+valor já tivesse sido dispensado ANTES de a recusa nascer.
-    const suprimidoPelaDispensa = !temErro && key !== null && dismissed.has(key);
+    const suppressedByDismissal = !temErro && key !== null && dismissed.has(key);
 
     // 019/PR-C (decisão do dono 28/08, prancheta 14b "Erro e aviso juntos") — quando o campo tem
     // erro E lição escrita, é a LIÇÃO que aparece, não "Confira {campo}: {valor}…" com o fecho
     // trocado: independentemente do valor comprometido (a lição não olha para ele) e da dispensa
     // (uma lição que acompanha uma recusa nunca se dispensa). Sem lição para o campo, cai no
     // comportamento de sempre.
-    const licao = committed !== null && temErro ? licaoDeCampo(nome) : null;
+    const lesson = committed !== null && temErro ? fieldLesson(nome) : null;
 
     return {
-        aviso: licao ?? (suprimidoPelaDispensa ? null : texto),
+        notice: lesson ?? (suppressedByDismissal ? null : text),
         comErro: temErro,
         onBlur: () => setCommitted(latest.current),
         onEntendi: () => {

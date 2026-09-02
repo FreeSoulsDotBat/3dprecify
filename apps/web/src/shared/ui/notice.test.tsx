@@ -4,7 +4,7 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { Aviso } from "./aviso";
+import { Notice } from "./notice";
 
 afterEach(() => cleanup());
 
@@ -14,24 +14,24 @@ afterEach(() => cleanup());
 
 describe("Aviso (019/T012 — tf-aviso)", () => {
     it("tem role=status e mostra o texto do aviso", () => {
-        render(<Aviso>850 g é bem acima do comum para uma peça só.</Aviso>);
+        render(<Notice>850 g é bem acima do comum para uma peça só.</Notice>);
 
-        const aviso = screen.getByRole("status");
-        expect(aviso).toHaveTextContent("850 g é bem acima do comum para uma peça só.");
+        const notice = screen.getByRole("status");
+        expect(notice).toHaveTextContent("850 g é bem acima do comum para uma peça só.");
     });
 
     it("NÃO é role=alert", () => {
-        render(<Aviso>texto qualquer</Aviso>);
+        render(<Notice>texto qualquer</Notice>);
         expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     });
 
     it("sem `action`, não renderiza a área de dispensa", () => {
-        const { container } = render(<Aviso>texto sem ação</Aviso>);
+        const { container } = render(<Notice>texto sem ação</Notice>);
         expect(container.querySelector(".tf-aviso__action")).not.toBeInTheDocument();
     });
 
     it("com `action`, renderiza o botão de dispensa recebido dentro de tf-aviso__action", () => {
-        render(<Aviso action={<button type="button">Entendi</button>}>texto com dispensa</Aviso>);
+        render(<Notice action={<button type="button">Entendi</button>}>texto com dispensa</Notice>);
 
         const botao = screen.getByRole("button", { name: "Entendi" });
         expect(botao).toBeInTheDocument();

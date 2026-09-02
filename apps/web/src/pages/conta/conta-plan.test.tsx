@@ -30,7 +30,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 
-import { ContaPage } from "./conta-page";
+import { AccountPage } from "./conta-page";
 
 const t = messages.account;
 
@@ -45,7 +45,7 @@ function renderConta() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return render(
         <QueryClientProvider client={client}>
-            <ContaPage />
+            <AccountPage />
         </QueryClientProvider>,
     );
 }

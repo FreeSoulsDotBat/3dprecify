@@ -104,13 +104,13 @@ describe("AppNav — rail colapsável (018/US5)", () => {
         }
 
         // …e some da TELA por `sr-only`, nunca por `display:none` (que o apagaria da árvore).
-        const catalogo = within(nav).getByRole("link", { name: messages.nav.catalog });
-        const label = within(catalogo).getByText(messages.nav.catalog);
+        const catalog = within(nav).getByRole("link", { name: messages.nav.catalog });
+        const label = within(catalog).getByText(messages.nav.catalog);
         expect(label).toHaveClass("sr-only");
         expect(label).not.toHaveStyle({ display: "none" });
 
         // E a dica devolve o nome ao mouse.
-        expect(catalogo).toHaveAttribute("title", messages.nav.catalog);
+        expect(catalog).toHaveAttribute("title", messages.nav.catalog);
     });
 
     it("o botão de recolher fica FORA da lista — não entra na travessia por setas das seções", async () => {

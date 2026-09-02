@@ -7,9 +7,9 @@ import { formatDecimal, parseDecimal } from "./decimal-ptbr";
 const t = messages.calculator.plausibility;
 
 /** Um aviso ancorado no campo que o causou. `campo` é o que a tela usa para colocá-lo no lugar. */
-export interface AvisoPlausibilidade {
-    campo: string;
-    texto: string;
+export interface PlausibilityWarning {
+    field: string;
+    text: string;
 }
 
 /**
@@ -17,7 +17,7 @@ export interface AvisoPlausibilidade {
  * de onde o número vem, porque um limiar sem procedência é um palpite que o próximo leitor vai
  * mexer sem saber o que está mexendo.
  */
-export const LIMIARES = {
+export const THRESHOLDS = {
     /** Uma impressora 3D de mesa puxa ~0,05–0,25 kW. 5 kW é a faixa de um chuveiro elétrico. */
     avgPowerKwMax: 5,
     /** A tarifa residencial no Brasil orbita R$ 0,60–1,20/kWh. R$ 5 é 5× o teto do país. */
@@ -64,7 +64,7 @@ function fmtMoney(n: number): string {
 }
 
 /** A entrada que este módulo lê — o subconjunto numérico já parseado pelo schema. */
-export interface EntradaPlausivel {
+export interface PlausibleInput {
     avgPowerKw?: number;
     tariffPerKwh?: number;
     machineLifetimeHours?: number;
@@ -79,105 +79,106 @@ export interface EntradaPlausivel {
  * Os avisos de uma entrada. `custoTotal`/`precoVarejo` entram porque o caso "zerei o que não
  * entendi" só é visível no RESULTADO: cada campo isolado está perfeitamente válido em 0.
  */
-export function avisosDePlausibilidade(
-    entrada: EntradaPlausivel,
+export function plausibilityWarnings(
+    plausibleInput: PlausibleInput,
     resultado?: { custoTotal: number; precoVarejo: number },
-): AvisoPlausibilidade[] {
-    const avisos: AvisoPlausibilidade[] = [];
+): PlausibilityWarning[] {
+    const notices: PlausibilityWarning[] = [];
     const acima = (v: number | undefined, teto: number): v is number => v !== undefined && v > teto;
 
-    if (acima(entrada.avgPowerKw, LIMIARES.avgPowerKwMax)) {
-        avisos.push({
-            campo: "avgPowerKw",
-            texto: t.avgPower.replace("{v}", fmt(entrada.avgPowerKw)),
+    if (acima(plausibleInput.avgPowerKw, THRESHOLDS.avgPowerKwMax)) {
+        notices.push({
+            field: "avgPowerKw",
+            text: t.avgPower.replace("{v}", fmt(plausibleInput.avgPowerKw)),
         });
     }
-    if (acima(entrada.tariffPerKwh, LIMIARES.tariffPerKwhMax)) {
-        avisos.push({
-            campo: "tariffPerKwh",
-            texto: t.tariff.replace("{v}", fmtMoney(entrada.tariffPerKwh)),
+    if (acima(plausibleInput.tariffPerKwh, THRESHOLDS.tariffPerKwhMax)) {
+        notices.push({
+            field: "tariffPerKwh",
+            text: t.tariff.replace("{v}", fmtMoney(plausibleInput.tariffPerKwh)),
         });
     }
     if (
-        entrada.machineLifetimeHours !== undefined &&
-        entrada.machineLifetimeHours > 0 &&
-        entrada.machineLifetimeHours < LIMIARES.machineLifetimeHoursMin
+        plausibleInput.machineLifetimeHours !== undefined &&
+        plausibleInput.machineLifetimeHours > 0 &&
+        plausibleInput.machineLifetimeHours < THRESHOLDS.machineLifetimeHoursMin
     ) {
-        avisos.push({
-            campo: "machineLifetimeHours",
-            texto: t.machineLifetime.replace("{v}", fmt(entrada.machineLifetimeHours)),
+        notices.push({
+            field: "machineLifetimeHours",
+            text: t.machineLifetime.replace("{v}", fmt(plausibleInput.machineLifetimeHours)),
         });
     }
-    if (acima(entrada.rollWeightKg, LIMIARES.rollWeightKgMax)) {
-        avisos.push({
-            campo: "rollWeightKg",
-            texto: t.rollWeight.replace("{v}", fmt(entrada.rollWeightKg)),
+    if (acima(plausibleInput.rollWeightKg, THRESHOLDS.rollWeightKgMax)) {
+        notices.push({
+            field: "rollWeightKg",
+            text: t.rollWeight.replace("{v}", fmt(plausibleInput.rollWeightKg)),
         });
     }
-    if (acima(entrada.laborRatePerHour, LIMIARES.laborRatePerHourMax)) {
-        avisos.push({
-            campo: "laborRatePerHour",
-            texto: t.laborRate.replace("{v}", fmtMoney(entrada.laborRatePerHour)),
+    if (acima(plausibleInput.laborRatePerHour, THRESHOLDS.laborRatePerHourMax)) {
+        notices.push({
+            field: "laborRatePerHour",
+            text: t.laborRate.replace("{v}", fmtMoney(plausibleInput.laborRatePerHour)),
         });
     }
-    if (acima(entrada.maintenanceReservePerHour, LIMIARES.maintenanceReservePerHourMax)) {
-        avisos.push({
-            campo: "maintenanceReservePerHour",
-            texto: t.maintenance.replace("{v}", fmtMoney(entrada.maintenanceReservePerHour)),
+    if (acima(plausibleInput.maintenanceReservePerHour, THRESHOLDS.maintenanceReservePerHourMax)) {
+        notices.push({
+            field: "maintenanceReservePerHour",
+            text: t.maintenance.replace("{v}", fmtMoney(plausibleInput.maintenanceReservePerHour)),
         });
     }
-    if (acima(entrada.printGrams, LIMIARES.printGramsMax)) {
-        avisos.push({
-            campo: "printGrams",
-            texto: t.grams.replace("{v}", fmt(entrada.printGrams)),
+    if (acima(plausibleInput.printGrams, THRESHOLDS.printGramsMax)) {
+        notices.push({
+            field: "printGrams",
+            text: t.grams.replace("{v}", fmt(plausibleInput.printGrams)),
         });
     }
-    if (acima(entrada.printTimeHours, LIMIARES.printTimeHoursMax)) {
-        avisos.push({
-            campo: "printTimeHours",
-            texto: t.printTime
-                .replace("{v}", fmt(entrada.printTimeHours))
-                .replace("{d}", fmt(Math.round((entrada.printTimeHours / 24) * 10) / 10)),
+    if (acima(plausibleInput.printTimeHours, THRESHOLDS.printTimeHoursMax)) {
+        notices.push({
+            field: "printTimeHours",
+            text: t.printTime
+                .replace("{v}", fmt(plausibleInput.printTimeHours))
+                .replace("{d}", fmt(Math.round((plausibleInput.printTimeHours / 24) * 10) / 10)),
         });
     }
 
     // O caso da persona "zera o que não entende": custo 0 e preço 0 são matematicamente certos e
     // comercialmente absurdos. Só dispara quando a peça EXISTE (tem gramas ou tempo) — um formulário
     // recém-aberto e ainda vazio não é um erro, é um formulário recém-aberto.
-    const pecaExiste = (entrada.printGrams ?? 0) > 0 || (entrada.printTimeHours ?? 0) > 0;
+    const pecaExiste =
+        (plausibleInput.printGrams ?? 0) > 0 || (plausibleInput.printTimeHours ?? 0) > 0;
     if (resultado && pecaExiste && resultado.custoTotal === 0 && resultado.precoVarejo === 0) {
-        avisos.push({ campo: "resultado", texto: t.zeroPrice });
+        notices.push({ field: "resultado", text: t.zeroPrice });
     }
     // O outro extremo, e ele existe porque os limiares por campo NÃO o pegam: erros pequenos em
     // vários campos ao mesmo tempo (uma casa decimal aqui, outra ali) compõem um custo que nenhum
     // deles reprova sozinho. Medido na homologação: R$ 6.000.061,60 com todos os campos "válidos".
-    if (resultado && resultado.custoTotal > LIMIARES.custoTotalMax) {
-        avisos.push({
-            campo: "resultado",
-            texto: t.absurdCost.replace("{v}", fmtMoney(resultado.custoTotal)),
+    if (resultado && resultado.custoTotal > THRESHOLDS.custoTotalMax) {
+        notices.push({
+            field: "resultado",
+            text: t.absurdCost.replace("{v}", fmtMoney(resultado.custoTotal)),
         });
     }
 
-    return avisos;
+    return notices;
 }
 
 /** O aviso do slot de canal — a comissão que o vendedor escreveu como fração (0,12 = 12%). */
-export function avisoDeComissao(commissionPct: number | undefined): string | null {
+export function commissionWarning(commissionPct: number | undefined): string | null {
     // `Number.isFinite` PRIMEIRO, e não é zelo: um campo vazio faz `parseDecimal` devolver `NaN`, e
     // `NaN <= 0` é FALSO — a primeira versão deste guarda deixava o NaN passar e a tela dizia
     // "Confira a comissão: NaN%". Pego pelo teste que o projeto já mantinha contra exatamente isso
     // (`calcular.test.tsx`: "never a NaN"), que é a razão de aquele teste existir.
     if (commissionPct === undefined || !Number.isFinite(commissionPct)) return null;
     if (commissionPct <= 0) return null;
-    if (commissionPct >= LIMIARES.commissionPctMin) return null;
+    if (commissionPct >= THRESHOLDS.commissionPctMin) return null;
     return t.lowCommission.replace("{v}", fmt(commissionPct));
 }
 
 /** O aviso do campo de quantidade de uma peça de kit. */
-export function avisoDeQuantidade(quantity: number | undefined): string | null {
+export function quantityWarning(quantity: number | undefined): string | null {
     if (quantity === undefined || !Number.isFinite(quantity)) return null;
-    if (quantity <= LIMIARES.quantityMax) return null;
-    return t.quantity.replace("{v}", fmt(quantity)).replace("{max}", fmt(LIMIARES.quantityMax));
+    if (quantity <= THRESHOLDS.quantityMax) return null;
+    return t.quantity.replace("{v}", fmt(quantity)).replace("{max}", fmt(THRESHOLDS.quantityMax));
 }
 
 /**
@@ -191,7 +192,7 @@ export function avisoDeQuantidade(quantity: number | undefined): string | null {
  * Cross-field (o "zerei tudo") não cabe aqui, de propósito: ele só é visível no RESULTADO, e vive
  * em `avisosDePlausibilidade`.
  */
-const CAMPOS_COM_FAIXA: readonly string[] = [
+const FIELDS_WITH_RANGE: readonly string[] = [
     "printGrams",
     "avgPowerKw",
     "tariffPerKwh",
@@ -208,15 +209,15 @@ const CAMPOS_COM_FAIXA: readonly string[] = [
  * "Corrija o campo acima para calcular." e a tela (`useAvisoDeCampo`) é quem decide não oferecer
  * "Entendi" nesse estado — não se dispensa uma lição que acompanha uma recusa.
  */
-export function avisoDeCampo(nome: string, bruto: string, comErro = false): string | null {
-    if (!CAMPOS_COM_FAIXA.includes(nome)) return null;
+export function fieldWarning(nome: string, bruto: string, comErro = false): string | null {
+    if (!FIELDS_WITH_RANGE.includes(nome)) return null;
     const n = parseDecimal(bruto);
     if (!Number.isFinite(n)) return null;
-    const entrada: EntradaPlausivel = {};
-    (entrada as Record<string, number>)[nome] = n;
-    const texto = avisosDePlausibilidade(entrada)[0]?.texto ?? null;
-    if (!texto) return null;
-    return comErro ? texto.replace(t.closingNormal, t.closingRejected) : texto;
+    const plausibleInput: PlausibleInput = {};
+    (plausibleInput as Record<string, number>)[nome] = n;
+    const text = plausibilityWarnings(plausibleInput)[0]?.text ?? null;
+    if (!text) return null;
+    return comErro ? text.replace(t.closingNormal, t.closingRejected) : text;
 }
 
 /**
@@ -225,6 +226,6 @@ export function avisoDeCampo(nome: string, bruto: string, comErro = false): stri
  * puro pelo NOME do campo, nunca pelo valor comprometido. `null` para quem não tem lição escrita
  * (hoje, todo campo fora dos oito de `messages.calculator.plausibility.lesson`).
  */
-export function licaoDeCampo(nome: string): string | null {
+export function fieldLesson(nome: string): string | null {
     return (t.lesson as Partial<Record<string, string>>)[nome] ?? null;
 }

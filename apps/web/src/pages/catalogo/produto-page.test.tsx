@@ -335,7 +335,7 @@ describe("ProdutoPage — reopen/edit (US6-3/US6-4)", () => {
 });
 
 describe("ProdutoPage — o recálculo do Catálogo, na FICHA (019/PR-D, correção de fidelidade)", () => {
-    const catalogo = messages.catalog;
+    const catalog = messages.catalog;
 
     // Movido de `features/catalog/products-panel.test.tsx` — a prancheta 17c desenha este aviso só
     // no ITEM ABERTO, nunca na lista.
@@ -353,9 +353,9 @@ describe("ProdutoPage — o recálculo do Catálogo, na FICHA (019/PR-D, correç
 
         const alert = screen.getByTestId("product-fixed-over-alert");
         expect(alert).toHaveTextContent(
-            catalogo.fixedOverNote.replace("{hoje}", "R$ 25,65").replace("{diff}", "R$ 5,65"),
+            catalog.fixedOverNote.replace("{hoje}", "R$ 25,65").replace("{diff}", "R$ 5,65"),
         );
-        fireEvent.click(screen.getByRole("button", { name: catalogo.unfix }));
+        fireEvent.click(screen.getByRole("button", { name: catalog.unfix }));
         expect(fixPriceMutateMock).toHaveBeenCalledWith({ id: "prod-1", sellerFixedPrice: null });
     });
 
@@ -372,11 +372,11 @@ describe("ProdutoPage — o recálculo do Catálogo, na FICHA (019/PR-D, correç
         renderPage("prod-1");
 
         expect(
-            screen.getByRole("button", { name: catalogo.keepPrice.replace("{valor}", "R$ 20,00") }),
+            screen.getByRole("button", { name: catalog.keepPrice.replace("{valor}", "R$ 20,00") }),
         ).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: catalogo.acceptNewPrice })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: catalog.acceptNewPrice })).toBeInTheDocument();
         fireEvent.click(
-            screen.getByRole("button", { name: catalogo.keepPrice.replace("{valor}", "R$ 20,00") }),
+            screen.getByRole("button", { name: catalog.keepPrice.replace("{valor}", "R$ 20,00") }),
         );
         expect(fixPriceMutateMock).toHaveBeenCalledWith({
             id: "prod-1",

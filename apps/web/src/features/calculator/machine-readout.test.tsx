@@ -144,11 +144,11 @@ describe("T051 — valor 0 da máquina: ressalva verbatim, sem divisão por zero
         await user.tab();
 
         expect(screen.queryByTestId("machine-readout")).not.toBeInTheDocument();
-        const aviso = await screen.findByTestId("aviso-machineLifetimeHours");
-        expect(aviso).toHaveTextContent(t.plausibility.lesson.machineLifetimeHours);
-        expect(aviso).not.toHaveTextContent("Confira a vida útil");
+        const notice = await screen.findByTestId("aviso-machineLifetimeHours");
+        expect(notice).toHaveTextContent(t.plausibility.lesson.machineLifetimeHours);
+        expect(notice).not.toHaveTextContent("Confira a vida útil");
         expect(
-            within(aviso).queryByRole("button", { name: t.plausibility.understood }),
+            within(notice).queryByRole("button", { name: t.plausibility.understood }),
         ).not.toBeInTheDocument();
     });
 });

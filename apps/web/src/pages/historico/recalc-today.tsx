@@ -270,8 +270,8 @@ function RecalcDialog({
                 return;
             }
             setOpen(false);
-            const aviso = syncToastFor(outcome.syncState);
-            toast(aviso.message, { tone: aviso.tone });
+            const notice = syncToastFor(outcome.syncState);
+            toast(notice.message, { tone: notice.tone });
         } finally {
             setBusy(false);
         }

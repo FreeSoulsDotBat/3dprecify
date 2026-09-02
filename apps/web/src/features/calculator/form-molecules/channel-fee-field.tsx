@@ -4,7 +4,7 @@ import { type Control, Controller } from "react-hook-form";
 
 import type { CalcFormValues, CHANNEL_FEE_FIELDS } from "@/features/calculator/calculator-schema";
 import { formatDecimal, parseDecimal } from "@/shared/lib/decimal-ptbr";
-import { avisoDeComissao } from "@/shared/lib/plausibilidade";
+import { commissionWarning } from "@/shared/lib/plausibility";
 import { Field, NumberField } from "@/shared/ui";
 
 /** One channel fee input, wired to `channels.{i}.{field}`. Its error comes from the per-slot
@@ -56,18 +56,18 @@ export function ChannelFeeField({
                 // Homologação automatizada (CF-010-UI-02) — o vendedor escreve `0,12` querendo dizer 12%.
                 // Ninguém recusa: 0,12% é uma comissão válida. Medido: o anúncio cai de R$ 27,55 para
                 // R$ 25,24 e ele anuncia abaixo do necessário, descobrindo no extrato do marketplace.
-                const aviso =
+                const notice =
                     meta.name === "commissionPct"
-                        ? avisoDeComissao(parseDecimal(String(field.value ?? "")))
+                        ? commissionWarning(parseDecimal(String(field.value ?? "")))
                         : null;
                 return (
                     <Field
                         label={meta.label}
                         optional
                         hint={
-                            aviso ? (
+                            notice ? (
                                 <span className="tf-field__aviso" data-testid="aviso-commissionPct">
-                                    {aviso}
+                                    {notice}
                                 </span>
                             ) : undefined
                         }

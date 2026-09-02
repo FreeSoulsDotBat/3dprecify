@@ -13,8 +13,8 @@ import { create } from "zustand";
  * `widgets/bom-line-editor` renderiza os MESMOS `CalcFieldMeta` (via `ControlledField`), e
  * `features/bom` não pode importar `features/calculator`.
  */
-export function dismissKey(campo: string, valorBruto: string): string {
-    return `${campo}:${valorBruto}`;
+export function dismissKey(field: string, valorBruto: string): string {
+    return `${field}:${valorBruto}`;
 }
 
 interface PlausibilityDismissState {

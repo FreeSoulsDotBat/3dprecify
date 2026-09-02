@@ -72,8 +72,8 @@ export function classifyExemption(args: {
         detalhes.push("o diff do catálogo tem mudança MATERIAL (não é só data de reverificação)");
     }
 
-    const dispensaveis = new Set<string>(EXEMPTABLE_FILES);
-    const forasteiros = arquivosDoPr.filter((f) => !dispensaveis.has(f));
+    const exemptable = new Set<string>(EXEMPTABLE_FILES);
+    const forasteiros = arquivosDoPr.filter((f) => !exemptable.has(f));
     // Zero arquivo não é "subconjunto vazio, logo dispensável": um PR sem arquivo não existe, e
     // conceder sobre o vazio é o jeito de a dispensa nascer ligada por acidente de aritmética.
     if (forasteiros.length > 0 || arquivosDoPr.length === 0) {

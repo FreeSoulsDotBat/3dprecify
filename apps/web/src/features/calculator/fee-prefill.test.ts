@@ -628,8 +628,10 @@ describe("016/PR-F — a curadoria chega ao PREÇO (artefato real → motor)", (
         const semPerfil = feesDe("SHOPEE", "PADRAO");
 
         it("o determinante do perfil resolve a OUTRA entrada, com os R$ 3,00 somados", () => {
-            const entrada = resolveEntry(artefato, "SHOPEE", { sellerProfile: "CPF_ALTO_VOLUME" })!;
-            expect(entrada.priceBands?.[0]?.fixedFee).toBe(7);
+            const plausibleInput = resolveEntry(artefato, "SHOPEE", {
+                sellerProfile: "CPF_ALTO_VOLUME",
+            })!;
+            expect(plausibleInput.priceBands?.[0]?.fixedFee).toBe(7);
             // E a entrada de hoje (sem perfil respondido) segue sendo a catch-all, intocada: é isso que
             // mantém byte-idêntico todo documento salvo (FR-926, última cláusula).
             expect(semPerfil.priceBands?.[0]?.fixedFee).toBe(0);

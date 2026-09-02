@@ -1,8 +1,8 @@
 // `CampoAviso` — the per-field `<Aviso>` body shared by ControlledField/TimeHmField/MachineCostFields,
 // extracted verbatim from calculator-form.tsx (019-polish readability split, no behavior change).
 import { messages } from "@/shared/i18n/messages.pt-br";
-import type { UseAvisoDeCampoResult } from "@/shared/lib/use-aviso-de-campo";
-import { Aviso, Button } from "@/shared/ui";
+import type { UseFieldWarningResult } from "@/shared/lib/use-field-warning";
+import { Notice, Button } from "@/shared/ui";
 
 const t = messages.calculator;
 
@@ -10,20 +10,20 @@ const t = messages.calculator;
  *  de `useAvisoDeCampo` (`ControlledField`/`TimeHmField`/`MachineCostFields`): nenhum aviso ⇒ nada
  *  renderiza; com uma recusa junto (14b), sem "Entendi" — não se dispensa uma lição que acompanha
  *  uma recusa. */
-export function CampoAviso({ aviso, testId }: { aviso: UseAvisoDeCampoResult; testId: string }) {
-    if (!aviso.aviso) return null;
+export function FieldNotice({ notice, testId }: { notice: UseFieldWarningResult; testId: string }) {
+    if (!notice.notice) return null;
     return (
-        <Aviso
+        <Notice
             data-testid={testId}
             action={
-                !aviso.comErro && (
-                    <Button variant="ghost" size="sm" onClick={aviso.onEntendi}>
+                !notice.comErro && (
+                    <Button variant="ghost" size="sm" onClick={notice.onEntendi}>
                         {t.plausibility.understood}
                     </Button>
                 )
             }
         >
-            {aviso.aviso}
-        </Aviso>
+            {notice.notice}
+        </Notice>
     );
 }

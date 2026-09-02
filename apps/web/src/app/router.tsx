@@ -7,11 +7,11 @@ import {
 
 import { AppShell } from "@/app/app-shell";
 import { BomPage } from "@/pages/bom/bom-page";
-import { CalcularPage } from "@/pages/calcular/calcular-page";
-import { CatalogoPage } from "@/pages/catalogo/catalogo-page";
-import { ContaPage } from "@/pages/conta/conta-page";
+import { CalculatePage } from "@/pages/calcular/calcular-page";
+import { CatalogPage } from "@/pages/catalogo/catalogo-page";
+import { AccountPage } from "@/pages/conta/conta-page";
 import { ErrorPage } from "@/pages/error/error-page";
-import { HistoricoPage } from "@/pages/historico/historico-page";
+import { HistoryPage } from "@/pages/historico/historico-page";
 import { NotFoundPage } from "@/pages/not-found/not-found-page";
 import { PrivacidadePage } from "@/pages/privacidade/privacidade-page";
 import { SignInPage } from "@/pages/sign-in/sign-in-page";
@@ -73,10 +73,10 @@ const indexRoute = createRoute({
 
 // GC-1: public. Renders for anonymous, not-configured, and authenticated — online or
 // offline. No `beforeLoad` auth check.
-const calcularRoute = createRoute({
+const calculateRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/calcular",
-    component: CalcularPage,
+    component: CalculatePage,
 });
 
 // 007/US7 (2026-07-10): /catalogo is PUBLIC — a signed-out user must SEE the honest premium
@@ -89,7 +89,7 @@ const calcularRoute = createRoute({
 // CatalogoPage reads it and renders ProdutoPage inline instead of the tabs. The auth gate that
 // used to live on those routes' `beforeLoad` moves here, conditioned on the param being present —
 // plain `/catalogo` (no `produto`) stays public exactly as before.
-const catalogoRoute = createRoute({
+const catalogRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/catalogo",
     // `?tab=` selects the catalog tab: the product page lands back on `products` after a save, a saved
@@ -115,7 +115,7 @@ const catalogoRoute = createRoute({
     beforeLoad: ({ context, search, location }) => {
         if (search.produto) requireAuth(context.status, location.href);
     },
-    component: CatalogoPage,
+    component: CatalogPage,
 });
 
 // ⚠ @doc DEC-006 — estas rotas NÃO checam auth: só traduzem a forma da URL. O gate acontece no
@@ -156,7 +156,7 @@ const bomRoute = createRoute({
 
 // ⚠ @doc DEC-100 — `/historico` é PÚBLICA (o deslogado vê o teaser honesto, nunca um bounce), e
 //   o gate de auth só existe quando o parâmetro `?snapshot=` está presente.
-const historicoRoute = createRoute({
+const historyRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/historico",
     // 009/T013 — the URL key is the **clientSnapshotId**, not the server id: it is minted on the
@@ -178,7 +178,7 @@ const historicoRoute = createRoute({
     beforeLoad: ({ context, search, location }) => {
         if (search.snapshot || search.construir) requireAuth(context.status, location.href);
     },
-    component: HistoricoPage,
+    component: HistoryPage,
 });
 
 // 013/F-02: the OLD 2-segment route stays registered as a CLIENT-SIDE REDIRECT for ≥1 release
@@ -198,7 +198,7 @@ const snapshotDetailRoute = createRoute({
 // E6/T013/T015: MP's `back_url` targets `/conta?checkout=retorno` (a 1-segment route — the
 // measured `base:'./'` cold-load trap, ux-billing.md §0.4/§10-F5). ContaPage reads `checkout` to
 // swap in the honest return surface instead of the normal plan panel.
-const contaRoute = createRoute({
+const accountRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/conta",
     // `assinar=1` e a intencao que os quatro teasers carregam (US7/T032): a oferta nao tem rota
@@ -210,7 +210,7 @@ const contaRoute = createRoute({
         assinar: search.assinar === "1" || search.assinar === 1 ? "1" : undefined,
     }),
     beforeLoad: ({ context, location }) => requireAuth(context.status, location.href),
-    component: ContaPage,
+    component: AccountPage,
 });
 
 // GC-3 / GC-4: `/sign-in` carries an optional `redirect` return-to-intent. An already-
@@ -243,14 +243,14 @@ const privacidadeRoute = createRoute({
 
 export const routeTree = rootRoute.addChildren([
     indexRoute,
-    calcularRoute,
-    catalogoRoute,
+    calculateRoute,
+    catalogRoute,
     produtoNovoRoute,
     produtoEditRoute,
     bomRoute,
-    historicoRoute,
+    historyRoute,
     snapshotDetailRoute,
-    contaRoute,
+    accountRoute,
     signInRoute,
     privacidadeRoute,
 ]);

@@ -17,7 +17,7 @@ import { formatDayMonthPtBr } from "@/shared/lib/format-date";
 import { NAME_MAX, nameNormKey } from "@/shared/lib/name-norm";
 import { useSessionStore } from "@/shared/session/session-store";
 import {
-    Aviso,
+    Notice,
     BreakdownRow,
     Button,
     Dialog,
@@ -34,7 +34,7 @@ import { CatalogPanel } from "./catalog-panel";
 // ⚠ @doc DEC-047 — a LISTA nunca escreve nada e nunca mostra preço numa linha: o aviso de
 //   "custo hoje > fixado" vive só no ITEM ABERTO. Hooks só na PAGE; este painel é puro.
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 const pf = messages.productForm;
 const cf = messages.catalogForm;
 
@@ -91,29 +91,29 @@ export function ProductsPanel({
     };
 
     const flagOf = (p: ProductOut): { kind: "fixed" | "stopped"; label: string } | undefined => {
-        if (p.sellerFixedPrice != null) return { kind: "fixed", label: catalogo.fixedFlag };
-        if (productNeedsAttention(p)) return { kind: "stopped", label: catalogo.stoppedFlag };
+        if (p.sellerFixedPrice != null) return { kind: "fixed", label: catalog.fixedFlag };
+        if (productNeedsAttention(p)) return { kind: "stopped", label: catalog.stoppedFlag };
         return undefined;
     };
 
     const metaOf = (p: ProductOut): string | undefined => {
         if (p.sellerFixedPrice != null && p.sellerFixedAt) {
-            return catalogo.fixedSince.replace("{data}", formatDayMonthPtBr(p.sellerFixedAt));
+            return catalog.fixedSince.replace("{data}", formatDayMonthPtBr(p.sellerFixedAt));
         }
         if (productNeedsAttention(p)) {
             const obs = observations.get(p.id);
             return obs
-                ? catalogo.stoppedAtLabel.replace("{data}", formatDayMonthPtBr(obs.observedAt))
+                ? catalog.stoppedAtLabel.replace("{data}", formatDayMonthPtBr(obs.observedAt))
                 : undefined;
         }
         const obs = observations.get(p.id);
         const savedAt = obs?.observedAt ?? p.updatedAt;
-        return catalogo.savedAtLabel.replace("{data}", formatDayMonthPtBr(savedAt));
+        return catalog.savedAtLabel.replace("{data}", formatDayMonthPtBr(savedAt));
     };
 
     const openDuplicate = (p: ProductOut) => {
         setDuplicateTarget(p);
-        setDuplicateName(`${p.name}${catalogo.duplicateCopySuffix}`);
+        setDuplicateName(`${p.name}${catalog.duplicateCopySuffix}`);
         setDuplicateError(undefined);
     };
     const closeDuplicate = () => {
@@ -160,26 +160,26 @@ export function ProductsPanel({
     return (
         <>
             {changedCount > 0 && (
-                <Aviso data-testid="products-price-changed-banner">
+                <Notice data-testid="products-price-changed-banner">
                     {changedCount === 1
-                        ? catalogo.priceChangedOne
-                        : catalogo.priceChangedCount.replace("{n}", String(changedCount))}
-                </Aviso>
+                        ? catalog.priceChangedOne
+                        : catalog.priceChangedCount.replace("{n}", String(changedCount))}
+                </Notice>
             )}
 
             <CatalogPanel<ProductOut, never>
                 list={list}
-                detailKicker={catalogo.detailProduct}
+                detailKicker={catalog.detailProduct}
                 feature="products"
                 gate={gate}
                 copy={{
-                    addLabel: catalogo.addProduct,
-                    emptyTitle: catalogo.emptyProductsTitle,
-                    emptyBody: catalogo.emptyProductsBody,
+                    addLabel: catalog.addProduct,
+                    emptyTitle: catalog.emptyProductsTitle,
+                    emptyBody: catalog.emptyProductsBody,
                     newTitle: pf.newProduct,
                     editTitle: pf.editProduct,
                     savedToast: pf.savedProduct,
-                    count: (n) => catalogo.countProducts.replace("{n}", String(n)),
+                    count: (n) => catalog.countProducts.replace("{n}", String(n)),
                 }}
                 rowName={(p) => p.name}
                 rowSummary={(p) =>
@@ -195,7 +195,7 @@ export function ProductsPanel({
                 }
                 // K3: one honest state for a product born manual (materialized by a kit save) and one
                 // degraded by a deletion — same missing links, same remedy, so the same calm line.
-                rowNote={(p) => (productNeedsAttention(p) ? catalogo.needsAttention : undefined)}
+                rowNote={(p) => (productNeedsAttention(p) ? catalog.needsAttention : undefined)}
                 rowPrice={priceOf}
                 rowWas={wasOf}
                 rowFlag={flagOf}
@@ -224,10 +224,10 @@ export function ProductsPanel({
                     {duplicateTarget && (
                         <div className="flex flex-col gap-3">
                             <DialogTitle>
-                                {catalogo.duplicateTitle.replace("{nome}", duplicateTarget.name)}
+                                {catalog.duplicateTitle.replace("{nome}", duplicateTarget.name)}
                             </DialogTitle>
                             <Field
-                                label={catalogo.copyNameLabel}
+                                label={catalog.copyNameLabel}
                                 error={duplicateError}
                                 hint={cf.nameCounter
                                     .replace("{n}", String(duplicateName.length))
@@ -244,12 +244,12 @@ export function ProductsPanel({
                                 )}
                             </Field>
                             <BreakdownRow
-                                label={catalogo.inherits}
-                                sublabel={catalogo.inheritsBody}
+                                label={catalog.inherits}
+                                sublabel={catalog.inheritsBody}
                             />
                             <BreakdownRow
-                                label={catalogo.notInherits}
-                                sublabel={catalogo.notInheritsBody}
+                                label={catalog.notInherits}
+                                sublabel={catalog.notInheritsBody}
                             />
                             <div className="flex justify-end gap-2">
                                 <Button variant="ghost" onClick={closeDuplicate}>
@@ -259,7 +259,7 @@ export function ProductsPanel({
                                     loading={create.isPending}
                                     onClick={() => void handleDuplicate()}
                                 >
-                                    {catalogo.duplicate}
+                                    {catalog.duplicate}
                                 </Button>
                             </div>
                         </div>

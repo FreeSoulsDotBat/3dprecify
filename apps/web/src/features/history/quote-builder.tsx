@@ -226,8 +226,8 @@ export function QuoteBuilder({
             sentRef.current = true;
             setSent(true);
             onSent(outcome.clientSnapshotId);
-            const aviso = syncToastFor(outcome.syncState);
-            toast(aviso.message, { tone: aviso.tone });
+            const notice = syncToastFor(outcome.syncState);
+            toast(notice.message, { tone: notice.tone });
         } finally {
             sendingRef.current = false;
             setSending(false);

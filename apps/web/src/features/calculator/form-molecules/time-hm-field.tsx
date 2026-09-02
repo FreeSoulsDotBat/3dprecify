@@ -10,11 +10,11 @@ import {
 import type { CalcFormValues } from "@/features/calculator/calculator-schema";
 import { decimalHoursToHm, hmToDecimalString } from "@/features/calculator/time-input";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { useAvisoDeCampo } from "@/shared/lib/use-aviso-de-campo";
+import { useFieldWarning } from "@/shared/lib/use-field-warning";
 import { Field, NumberField } from "@/shared/ui";
 
-import { CampoAviso } from "../form-atoms/campo-aviso";
-import { CampoDeHoras } from "../form-atoms/campo-de-horas";
+import { FieldNotice } from "../form-atoms/field-notice";
+import { HoursField } from "../form-atoms/hours-field";
 
 const t = messages.calculator;
 
@@ -36,14 +36,14 @@ function TimeHmFieldBody({
     // Este campo NÃO passa pelo `ControlledField` (tem controle próprio de h+min), então o aviso
     // precisa ser pedido aqui — e é justamente o caso do achado CF-002-LEIGO-C: 150 no campo de
     // HORAS, quando o vendedor queria dizer 150 minutos, multiplica o custo por 15.
-    const aviso = useAvisoDeCampo(
+    const notice = useFieldWarning(
         "printTimeHours",
         String(field.value ?? ""),
         Boolean(fieldState.error),
     );
     const onBlurTime = () => {
         field.onBlur();
-        aviso.onBlur();
+        notice.onBlur();
     };
     return (
         <div className="calc-field-cell">
@@ -55,7 +55,7 @@ function TimeHmFieldBody({
             >
                 {() => (
                     <div className="flex items-center gap-2">
-                        <CampoDeHoras h={h} min={min} onCommit={commit} onBlurField={onBlurTime} />
+                        <HoursField h={h} min={min} onCommit={commit} onBlurField={onBlurTime} />
                         <NumberField
                             aria-label={t.timeInput.minutesAria}
                             unit={t.timeInput.minutesUnit}
@@ -68,7 +68,7 @@ function TimeHmFieldBody({
                     </div>
                 )}
             </Field>
-            <CampoAviso aviso={aviso} testId="aviso-printTimeHours" />
+            <FieldNotice notice={notice} testId="aviso-printTimeHours" />
         </div>
     );
 }

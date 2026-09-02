@@ -7,7 +7,7 @@ import { Alert, Button, EmptyState, Icon } from "@/shared/ui";
 import { captionText, rowNameStyle, rowSummaryStyle } from "./catalog-panel-styles";
 import { type CatalogPanelRenderForm } from "./catalog-panel";
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 // 018/US1 — mestre-detalhe (≥1280px), extracted verbatim from `catalog-panel.tsx`'s `isWide`
 // non-empty branch. Lista à esquerda, ficha do item à direita; a busca e a seleção seguem locais
@@ -72,14 +72,14 @@ export function CatalogPanelMasterDetail<TItem extends { id: string }, TForm, TW
             <div className="tf-catalog-md__master">
                 <div className="tf-catalog-md__toolbar">
                     <label className="tf-inputwrap tf-catalog-md__search">
-                        <span className="sr-only">{catalogo.searchLabel}</span>
+                        <span className="sr-only">{catalog.searchLabel}</span>
                         <Icon name="search" size={18} aria-hidden />
                         <input
                             className="tf-input"
                             type="search"
                             value={query}
-                            placeholder={catalogo.searchPlaceholder}
-                            aria-label={catalogo.searchLabel}
+                            placeholder={catalog.searchPlaceholder}
+                            aria-label={catalog.searchLabel}
                             onChange={(event) => setQuery(event.target.value)}
                         />
                     </label>
@@ -92,10 +92,10 @@ export function CatalogPanelMasterDetail<TItem extends { id: string }, TForm, TW
                     // não achou. Dizer "nenhum filamento salvo" seria mentira sobre os dados do vendedor.
                     <EmptyState
                         icon="package"
-                        title={catalogo.searchEmpty.replace("{termo}", query.trim())}
+                        title={catalog.searchEmpty.replace("{termo}", query.trim())}
                         action={
                             <Button variant="secondary" size="sm" onClick={() => setQuery("")}>
-                                {catalogo.searchClear}
+                                {catalog.searchClear}
                             </Button>
                         }
                     />
@@ -141,7 +141,7 @@ export function CatalogPanelMasterDetail<TItem extends { id: string }, TForm, TW
                         informação uma vez só, para a lista inteira. */}
                                                 {gate === "lapsed" && (
                                                     <span style={rowSummaryStyle}>
-                                                        {catalogo.readOnlyHint}
+                                                        {catalog.readOnlyHint}
                                                     </span>
                                                 )}
                                             </span>
@@ -195,7 +195,7 @@ export function CatalogPanelMasterDetail<TItem extends { id: string }, TForm, TW
                             <p style={rowSummaryStyle}>{summaryOf(selected)}</p>
                             <Button variant="secondary" onClick={() => openEdit(selected)}>
                                 <Icon name="pencil" size={18} aria-hidden />{" "}
-                                {catalogo.detailOpenEditor}
+                                {catalog.detailOpenEditor}
                             </Button>
                         </div>
                     )}

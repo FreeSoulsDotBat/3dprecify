@@ -6,21 +6,21 @@ import { type Control, useController } from "react-hook-form";
 import {
     costPerHour,
     deriveMachineLifetimeHours,
-    detectRitmoMode,
-    RITMOS_HORAS_ANO,
-    type RitmoIndex,
+    detectUsageRateMode,
+    USAGE_RATE_HOURS_PER_YEAR,
+    type UsageRateIndex,
 } from "@/features/calculator/machine-cost";
 import type { CalcFormValues } from "@/features/calculator/calculator-schema";
-import { PAYBACK_YEAR_OPTIONS, RITMO_OPTIONS } from "@/features/calculator/calculator-schema";
+import { PAYBACK_YEAR_OPTIONS, USAGE_RATE_OPTIONS } from "@/features/calculator/calculator-schema";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { parseDecimal } from "@/shared/lib/decimal-ptbr";
-import { useAvisoDeCampo } from "@/shared/lib/use-aviso-de-campo";
+import { useFieldWarning } from "@/shared/lib/use-field-warning";
 import { useIsCalcWide } from "@/shared/lib/use-is-wide";
 import { Alert, Button, Field, InfoTip, NumberField, Segmented, Select } from "@/shared/ui";
 
-import { CampoAviso } from "../form-atoms/campo-aviso";
+import { FieldNotice } from "../form-atoms/field-notice";
 import { sectionLabel } from "../form-atoms/form-styles";
-import { fmtHoras, MachineCostReadout } from "../form-molecules/machine-cost-readout";
+import { formatHours, MachineCostReadout } from "../form-molecules/machine-cost-readout";
 
 const t = messages.calculator;
 
@@ -46,13 +46,13 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
     const [pendingConfirm, setPendingConfirm] = useState(false);
 
     const currentHours = parseDecimal(lifetimeField.field.value);
-    const detected = detectRitmoMode(currentHours);
+    const detected = detectUsageRateMode(currentHours);
     const adjustMode = manualOverride || detected === null;
     const mode: MachineMode = adjustMode ? "ajustar" : "estimar";
-    const ritmoIndex: RitmoIndex = detected?.ritmoIndex ?? 1;
+    const usageRateIndex: UsageRateIndex = detected?.usageRateIndex ?? 1;
     const paybackYears = detected?.paybackYears ?? 3;
 
-    const applyRitmo = (idx: RitmoIndex, years: number) => {
+    const applyUsageRate = (idx: UsageRateIndex, years: number) => {
         lifetimeField.field.onChange(String(deriveMachineLifetimeHours(idx, years)));
     };
 
@@ -63,7 +63,7 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
     const rawMachineValueNum = parseDecimal(valueField.field.value);
     const machineValueNum = Number.isFinite(rawMachineValueNum) ? rawMachineValueNum : 0;
     const perHour = costPerHour(machineValueNum, currentHours);
-    const proposedHours = deriveMachineLifetimeHours(ritmoIndex, paybackYears);
+    const proposedHours = deriveMachineLifetimeHours(usageRateIndex, paybackYears);
     const anosLabel = (
         paybackYears === 1 ? t.machineCost.paybackYearLabel : t.machineCost.paybackYearsLabel
     ).replace("{n}", String(paybackYears));
@@ -75,7 +75,7 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
             return;
         }
         if (!adjustMode) return; // já em "estimar" — nada a fazer.
-        if (detectRitmoMode(currentHours) !== null) {
+        if (detectUsageRateMode(currentHours) !== null) {
             // As horas cruas JÁ são produto de um ritmo × payback — nada seria sobrescrito.
             setManualOverride(false);
             return;
@@ -83,14 +83,14 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
         setPendingConfirm(true);
     };
 
-    const aviso = useAvisoDeCampo(
+    const notice = useFieldWarning(
         "machineLifetimeHours",
         String(lifetimeField.field.value ?? ""),
         Boolean(lifetimeField.fieldState.error),
     );
     const onBlurLifetime = () => {
         lifetimeField.field.onBlur();
-        aviso.onBlur();
+        notice.onBlur();
     };
 
     return (
@@ -161,11 +161,11 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
                             {(p) => (
                                 <Select
                                     {...p}
-                                    options={RITMO_OPTIONS}
-                                    value={String(ritmoIndex)}
+                                    options={USAGE_RATE_OPTIONS}
+                                    value={String(usageRateIndex)}
                                     onChange={(e) =>
-                                        applyRitmo(
-                                            Number(e.target.value) as RitmoIndex,
+                                        applyUsageRate(
+                                            Number(e.target.value) as UsageRateIndex,
                                             paybackYears,
                                         )
                                     }
@@ -178,7 +178,9 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
                                     {...p}
                                     options={PAYBACK_YEAR_OPTIONS}
                                     value={String(paybackYears)}
-                                    onChange={(e) => applyRitmo(ritmoIndex, Number(e.target.value))}
+                                    onChange={(e) =>
+                                        applyUsageRate(usageRateIndex, Number(e.target.value))
+                                    }
                                 />
                             )}
                         </Field>
@@ -222,7 +224,7 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
                             />
                         )}
                     </Field>
-                    <CampoAviso aviso={aviso} testId="aviso-machineLifetimeHours" />
+                    <FieldNotice notice={notice} testId="aviso-machineLifetimeHours" />
                 </>
             )}
 
@@ -240,12 +242,15 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
                     role="alertdialog"
                     data-testid="machine-confirm"
                     title={t.machineCost.confirmTitle
-                        .replace("{atual}", fmtHoras(currentHours))
-                        .replace("{novo}", fmtHoras(proposedHours))}
+                        .replace("{atual}", formatHours(currentHours))
+                        .replace("{novo}", formatHours(proposedHours))}
                 >
                     <p>
                         {t.machineCost.confirmBody
-                            .replace("{ritmo}", fmtHoras(RITMOS_HORAS_ANO[ritmoIndex])) // "1.200", como a 15e
+                            .replace(
+                                "{ritmo}",
+                                formatHours(USAGE_RATE_HOURS_PER_YEAR[usageRateIndex]),
+                            ) // "1.200", como a 15e
                             .replace("{anos}", anosLabel)}
                     </p>
                     <div className="flex flex-wrap gap-2 mt-1">
@@ -253,19 +258,22 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
                             variant="primary"
                             size="sm"
                             onClick={() => {
-                                applyRitmo(ritmoIndex, paybackYears);
+                                applyUsageRate(usageRateIndex, paybackYears);
                                 setManualOverride(false);
                                 setPendingConfirm(false);
                             }}
                         >
-                            {t.machineCost.confirmUse.replace("{novo}", fmtHoras(proposedHours))}
+                            {t.machineCost.confirmUse.replace("{novo}", formatHours(proposedHours))}
                         </Button>
                         <Button
                             variant="secondary"
                             size="sm"
                             onClick={() => setPendingConfirm(false)}
                         >
-                            {t.machineCost.confirmKeep.replace("{atual}", fmtHoras(currentHours))}
+                            {t.machineCost.confirmKeep.replace(
+                                "{atual}",
+                                formatHours(currentHours),
+                            )}
                         </Button>
                     </div>
                 </Alert>

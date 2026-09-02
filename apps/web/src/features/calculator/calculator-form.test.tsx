@@ -244,9 +244,9 @@ describe("T049 — o aviso de plausibilidade nasce no BLUR, não no change (019/
         await user.type(input, "60");
         await user.tab();
 
-        const aviso = await screen.findByTestId("aviso-rollWeightKg");
-        expect(aviso).toHaveAttribute("role", "status");
-        const entendi = within(aviso).getByRole("button", { name: t.plausibility.understood });
+        const notice = await screen.findByTestId("aviso-rollWeightKg");
+        expect(notice).toHaveAttribute("role", "status");
+        const entendi = within(notice).getByRole("button", { name: t.plausibility.understood });
 
         await user.click(entendi);
         expect(screen.queryByTestId("aviso-rollWeightKg")).not.toBeInTheDocument();

@@ -1,7 +1,7 @@
 import { type ReactNode } from "react";
 
 import { type PremiumGate } from "@/shared/billing/premium-gate";
-import { type VazioFeature, VazioDidatico } from "@/shared/billing/vazio-didatico";
+import { type DidacticEmptyFeature, DidacticEmpty } from "@/shared/billing/didactic-empty";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Alert, Button, EmptyState, Spinner } from "@/shared/ui";
 
@@ -10,7 +10,7 @@ import { Alert, Button, EmptyState, Spinner } from "@/shared/ui";
 // (32a/32c/32g). Extracted verbatim from `catalog-panel.tsx` — same markup, same conditions, only
 // named and moved so the router in the panel reads as a router.
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 export function CatalogPanelLoading() {
     return (
@@ -22,9 +22,9 @@ export function CatalogPanelLoading() {
 
 export function CatalogPanelErrorState({ onRetry }: { onRetry: () => void }) {
     return (
-        <Alert tone="danger" title={catalogo.loadError}>
+        <Alert tone="danger" title={catalog.loadError}>
             <Button variant="secondary" size="sm" onClick={onRetry} className="mt-2">
-                {catalogo.retry}
+                {catalog.retry}
             </Button>
         </Alert>
     );
@@ -60,7 +60,7 @@ export function CatalogPanelGateEmpty({
     teaser,
     detail,
 }: {
-    feature: VazioFeature;
+    feature: DidacticEmptyFeature;
     gate: Exclude<PremiumGate, "active">;
     action: ReactNode;
     teaser: boolean;
@@ -70,11 +70,11 @@ export function CatalogPanelGateEmpty({
         return (
             <div className="tf-catalog-md">
                 <div className="tf-catalog-md__master">
-                    <VazioDidatico feature={feature} gate={gate} action={action} teaser={false} />
+                    <DidacticEmpty feature={feature} gate={gate} action={action} teaser={false} />
                 </div>
                 {detail}
             </div>
         );
     }
-    return <VazioDidatico feature={feature} gate={gate} action={action} teaser={teaser} />;
+    return <DidacticEmpty feature={feature} gate={gate} action={action} teaser={teaser} />;
 }

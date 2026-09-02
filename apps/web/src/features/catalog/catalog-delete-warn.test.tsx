@@ -35,7 +35,7 @@ vi.mock("@/entities/user/use-entitlement", () => ({
 
 import { FilamentsPanel } from "./filaments-panel";
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 const pf = messages.productForm;
 
 const filament = {
@@ -82,7 +82,7 @@ describe("FilamentsPanel — referenced-item delete warn (US6-4)", () => {
         );
         render(<FilamentsPanel />);
 
-        fireEvent.click(screen.getByRole("button", { name: `${catalogo.remove} PLA Azul` }));
+        fireEvent.click(screen.getByRole("button", { name: `${catalog.remove} PLA Azul` }));
 
         expect(screen.getByText(pf.deleteWarnFilament.replace("{n}", "2"))).toBeInTheDocument();
     });
@@ -90,7 +90,7 @@ describe("FilamentsPanel — referenced-item delete warn (US6-4)", () => {
     it("shows NO warn when nothing references the filament", () => {
         render(<FilamentsPanel />);
 
-        fireEvent.click(screen.getByRole("button", { name: `${catalogo.remove} PLA Azul` }));
+        fireEvent.click(screen.getByRole("button", { name: `${catalog.remove} PLA Azul` }));
 
         expect(screen.getByText(messages.catalogForm.deleteBody)).toBeInTheDocument();
         expect(
@@ -106,19 +106,17 @@ describe("FilamentsPanel — referenced-item delete warn (US6-4)", () => {
 describe("FilamentsPanel — lapsed delete honesty (T034)", () => {
     it("active: tapping delete opens the destructive confirm dialog", () => {
         render(<FilamentsPanel />);
-        fireEvent.click(screen.getByRole("button", { name: `${catalogo.remove} PLA Azul` }));
+        fireEvent.click(screen.getByRole("button", { name: `${catalog.remove} PLA Azul` }));
         expect(screen.getByText(messages.catalogForm.deleteBody)).toBeInTheDocument();
     });
 
     it("lapsed: tapping delete shows the reactivation intercept, NEVER the destructive confirm", () => {
         entitlementStatus.current = "lapsed";
         render(<FilamentsPanel />);
-        fireEvent.click(screen.getByRole("button", { name: `${catalogo.remove} PLA Azul` }));
+        fireEvent.click(screen.getByRole("button", { name: `${catalog.remove} PLA Azul` }));
         // The inert edit sheet with its reactivation footer (019/PR-B T045) — the same honest surface
         // Edit uses.
-        expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
-            catalogo.reactivateBody,
-        );
+        expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(catalog.reactivateBody);
         // And crucially NOT the working destructive confirm.
         expect(screen.queryByText(messages.catalogForm.deleteBody)).not.toBeInTheDocument();
     });

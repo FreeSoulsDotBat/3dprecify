@@ -44,7 +44,7 @@ vi.mock("@/entities/user/use-entitlement", () => ({
 
 import { ProductsPanel } from "./products-panel";
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 function listState(items: unknown[]) {
     return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };
@@ -106,8 +106,8 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
     it("empty state offers the add action, which navigates to the full-page create route", () => {
         render(<ProductsPanel />);
 
-        expect(screen.getByText(catalogo.emptyProductsTitle)).toBeInTheDocument();
-        fireEvent.click(screen.getByRole("button", { name: catalogo.addProduct }));
+        expect(screen.getByText(catalog.emptyProductsTitle)).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: catalog.addProduct }));
         // 013/F-02: the create form is a search param on /catalogo now, not a 2-segment route.
         expect(navigateMock).toHaveBeenCalledWith({ to: "/catalogo", search: { produto: "novo" } });
     });
@@ -118,7 +118,7 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
 
         expect(screen.getByText("Vaso G")).toBeInTheDocument();
         expect(screen.getByText("PLA Azul · Ender 3")).toBeInTheDocument();
-        expect(screen.getByText(catalogo.countProducts.replace("{n}", "1"))).toBeInTheDocument();
+        expect(screen.getByText(catalog.countProducts.replace("{n}", "1"))).toBeInTheDocument();
         expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
     });
 
@@ -126,7 +126,7 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
         useProductsMock.mockReturnValue(listState([{ ...product, filamentId: null }]));
         render(<ProductsPanel />);
 
-        expect(screen.getByText(`${catalogo.manualRef} · Ender 3`)).toBeInTheDocument();
+        expect(screen.getByText(`${catalog.manualRef} · Ender 3`)).toBeInTheDocument();
     });
 
     it("FB-04: shows a neutral loading placeholder while references are still loading — never 'manual'", () => {
@@ -150,10 +150,10 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
         render(<ProductsPanel />);
 
         expect(
-            screen.getByText(`${catalogo.resolvingRef} · ${catalogo.resolvingRef}`),
+            screen.getByText(`${catalog.resolvingRef} · ${catalog.resolvingRef}`),
         ).toBeInTheDocument();
         expect(
-            screen.queryByText(`${catalogo.manualRef} · ${catalogo.manualRef}`),
+            screen.queryByText(`${catalog.manualRef} · ${catalog.manualRef}`),
         ).not.toBeInTheDocument();
     });
 
@@ -187,7 +187,7 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
 
         // Tapping delete must reach the honest reactivation surface — for products (navigation mode)
         // the row/delete affordance leads to the read-only page, NEVER the working destructive confirm.
-        fireEvent.click(screen.getByRole("button", { name: `${catalogo.remove} Vaso G` }));
+        fireEvent.click(screen.getByRole("button", { name: `${catalog.remove} Vaso G` }));
         expect(screen.queryByText(messages.catalogForm.deleteBody)).not.toBeInTheDocument();
     });
 });
@@ -217,7 +217,7 @@ describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
         );
 
         expect(screen.getByTestId("products-price-changed-banner")).toHaveTextContent(
-            catalogo.priceChangedCount.replace("{n}", "3"),
+            catalog.priceChangedCount.replace("{n}", "3"),
         );
         expect(screen.getByText("era R$ 38,90")).toBeInTheDocument();
         expect(screen.getByText("Salvo em 12/05")).toBeInTheDocument();
@@ -228,7 +228,7 @@ describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
         render(<ProductsPanel changedCount={1} />);
 
         expect(screen.getByTestId("products-price-changed-banner")).toHaveTextContent(
-            catalogo.priceChangedOne,
+            catalog.priceChangedOne,
         );
     });
 
@@ -244,7 +244,7 @@ describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
         render(<ProductsPanel recomputed={new Map([["p1", 41.2]])} />);
 
         expect(screen.getByText("R$ 38,90")).toBeInTheDocument();
-        expect(screen.getByTestId("product-row-fixed")).toHaveTextContent(catalogo.fixedFlag);
+        expect(screen.getByTestId("product-row-fixed")).toHaveTextContent(catalog.fixedFlag);
     });
 
     // 019/PR-D (correção de fidelidade) — nenhuma prancheta (16a/16b/17c) desenha o aviso
@@ -257,7 +257,7 @@ describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
         render(<ProductsPanel recomputed={new Map([["p1", 41.2]])} />);
 
         expect(screen.queryByTestId("product-fixed-over-alert")).not.toBeInTheDocument();
-        expect(screen.queryByRole("button", { name: catalogo.unfix })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: catalog.unfix })).not.toBeInTheDocument();
     });
 
     it("'Manter {valor}' NA LISTA: não renderiza nenhum botão (mora só na ficha)", () => {
@@ -271,7 +271,7 @@ describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
 
         expect(
             screen.queryByRole("button", {
-                name: catalogo.keepPrice.replace("{valor}", "R$ 38,90"),
+                name: catalog.keepPrice.replace("{valor}", "R$ 38,90"),
             }),
         ).not.toBeInTheDocument();
     });
@@ -282,11 +282,11 @@ describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
         );
         render(<ProductsPanel />);
 
-        fireEvent.click(screen.getByRole("button", { name: `${catalogo.duplicate} Gancho` }));
+        fireEvent.click(screen.getByRole("button", { name: `${catalog.duplicate} Gancho` }));
         const dialog = await screen.findByTestId("product-duplicate-dialog");
         const nameInput = within(dialog).getByRole("textbox");
         fireEvent.change(nameInput, { target: { value: "Vaso hexagonal 15 cm" } });
-        fireEvent.click(within(dialog).getByRole("button", { name: catalogo.duplicate }));
+        fireEvent.click(within(dialog).getByRole("button", { name: catalog.duplicate }));
 
         expect(
             await within(dialog).findByText(messages.catalogForm.nameConflict),
@@ -306,16 +306,16 @@ describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
         );
         render(<ProductsPanel />);
 
-        fireEvent.click(screen.getByRole("button", { name: `${catalogo.duplicate} Gancho` }));
+        fireEvent.click(screen.getByRole("button", { name: `${catalog.duplicate} Gancho` }));
         const dialog = await screen.findByTestId("product-duplicate-dialog");
         expect(within(dialog).getByRole("textbox")).toHaveValue(
-            `Gancho${catalogo.duplicateCopySuffix}`,
+            `Gancho${catalog.duplicateCopySuffix}`,
         );
-        fireEvent.click(within(dialog).getByRole("button", { name: catalogo.duplicate }));
+        fireEvent.click(within(dialog).getByRole("button", { name: catalog.duplicate }));
 
         await vi.waitFor(() => expect(createMock).toHaveBeenCalledTimes(1));
         const body = createMock.mock.calls[0][0];
-        expect(body.name).toBe(`Gancho${catalogo.duplicateCopySuffix}`);
+        expect(body.name).toBe(`Gancho${catalog.duplicateCopySuffix}`);
         expect(body).not.toHaveProperty("sellerFixedPrice");
     });
 
@@ -329,9 +329,9 @@ describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
         useProductsMock.mockReturnValue(listState([n("p1", "Gancho", { filamentId: null })]));
         render(<ProductsPanel />);
 
-        fireEvent.click(screen.getByRole("button", { name: `${catalogo.duplicate} Gancho` }));
+        fireEvent.click(screen.getByRole("button", { name: `${catalog.duplicate} Gancho` }));
         const dialog = await screen.findByTestId("product-duplicate-dialog");
-        fireEvent.click(within(dialog).getByRole("button", { name: catalogo.duplicate }));
+        fireEvent.click(within(dialog).getByRole("button", { name: catalog.duplicate }));
 
         await vi.waitFor(() => expect(createMock).toHaveBeenCalledTimes(1));
         expect(createMock.mock.calls[0][0].filamentId).toBeNull();
@@ -358,9 +358,9 @@ describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
 
         expect(screen.getByText("R$ 9,50")).toBeInTheDocument();
         expect(screen.queryByTestId("product-row-fixed")).not.toBeInTheDocument(); // não é "fixado"
-        expect(screen.getByText(catalogo.stoppedFlag)).toBeInTheDocument();
+        expect(screen.getByText(catalog.stoppedFlag)).toBeInTheDocument();
         expect(
-            screen.getByText(catalogo.stoppedAtLabel.replace("{data}", "21/04")),
+            screen.getByText(catalog.stoppedAtLabel.replace("{data}", "21/04")),
         ).toBeInTheDocument();
     });
 });

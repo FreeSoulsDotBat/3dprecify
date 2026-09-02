@@ -92,7 +92,7 @@ vi.mock("@/entities/user/use-entitlement", () => ({
 
 import { useSessionStore } from "@/shared/session/session-store";
 
-import { CatalogoPage } from "./catalogo-page";
+import { CatalogPage } from "./catalogo-page";
 
 beforeEach(() => {
     useSessionStore.setState({
@@ -108,7 +108,7 @@ afterEach(() => {
     cleanup();
     useSessionStore.setState({ status: "anonymous", user: null });
 });
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 const pt = messages.premiumTeaser.CATALOG;
 
 // 013/F-02 follow-up — REGRESSION GUARD. The tab used to live in `useState`, re-derived only on
@@ -121,13 +121,13 @@ describe("CatalogoPage — the tab is derived from the URL (013/F-02)", () => {
     // `kits` is deliberately absent: KitsPanel needs a QueryClientProvider this suite does not set up,
     // and the derivation under test is identical for every id (it is one `TABS.some` lookup).
     it.each([
-        ["printers", () => catalogo.tabPrinters],
-        ["products", () => catalogo.tabProducts],
+        ["printers", () => catalog.tabPrinters],
+        ["products", () => catalog.tabProducts],
     ])("?tab=%s selects that tab on a cold render", (tab, label) => {
         search.current = { tab };
-        render(<CatalogoPage />);
+        render(<CatalogPage />);
         expect(screen.getByRole("tab", { name: label() })).toHaveAttribute("aria-selected", "true");
-        expect(screen.getByRole("tab", { name: catalogo.tabFilaments })).toHaveAttribute(
+        expect(screen.getByRole("tab", { name: catalog.tabFilaments })).toHaveAttribute(
             "aria-selected",
             "false",
         );
@@ -135,16 +135,16 @@ describe("CatalogoPage — the tab is derived from the URL (013/F-02)", () => {
 
     it("an unknown ?tab= falls back to Filamentos instead of rendering nothing", () => {
         search.current = { tab: "lixo" };
-        render(<CatalogoPage />);
-        expect(screen.getByRole("tab", { name: catalogo.tabFilaments })).toHaveAttribute(
+        render(<CatalogPage />);
+        expect(screen.getByRole("tab", { name: catalog.tabFilaments })).toHaveAttribute(
             "aria-selected",
             "true",
         );
     });
 
     it("clicking a tab writes it to the URL (replace) so it survives reload/bookmark", () => {
-        render(<CatalogoPage />);
-        fireEvent.click(screen.getByRole("tab", { name: catalogo.tabPrinters }));
+        render(<CatalogPage />);
+        fireEvent.click(screen.getByRole("tab", { name: catalog.tabPrinters }));
         expect(navigateMock).toHaveBeenCalledWith({
             to: "/catalogo",
             search: { tab: "printers" },
@@ -155,36 +155,36 @@ describe("CatalogoPage — the tab is derived from the URL (013/F-02)", () => {
 
 describe("CatalogoPage — segmented tabs IA (G1) + premium filament panel", () => {
     it("exposes a tablist with the three catalog domains, Filamentos selected by default", () => {
-        render(<CatalogoPage />);
-        expect(screen.getByRole("tablist", { name: catalogo.tabsLabel })).toBeInTheDocument();
-        const filaments = screen.getByRole("tab", { name: catalogo.tabFilaments });
+        render(<CatalogPage />);
+        expect(screen.getByRole("tablist", { name: catalog.tabsLabel })).toBeInTheDocument();
+        const filaments = screen.getByRole("tab", { name: catalog.tabFilaments });
         expect(filaments).toHaveAttribute("aria-selected", "true");
-        expect(screen.getByRole("tab", { name: catalogo.tabPrinters })).toHaveAttribute(
+        expect(screen.getByRole("tab", { name: catalog.tabPrinters })).toHaveAttribute(
             "aria-selected",
             "false",
         );
-        expect(screen.getByRole("tab", { name: catalogo.tabProducts })).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: catalog.tabProducts })).toBeInTheDocument();
         // The default panel is the Filamentos premium surface (empty state here).
-        expect(screen.getByText(catalogo.emptyFilamentsTitle)).toBeInTheDocument();
+        expect(screen.getByText(catalog.emptyFilamentsTitle)).toBeInTheDocument();
     });
 
     it("switches to the REAL Produtos panel when its tab is selected (US6/T030)", () => {
         // 013/F-02: selecting a tab is now a URL change, so the selected tab arrives as `?tab=`.
         search.current = { tab: "products" };
-        render(<CatalogoPage />);
+        render(<CatalogPage />);
 
-        expect(screen.getByRole("tab", { name: catalogo.tabProducts })).toHaveAttribute(
+        expect(screen.getByRole("tab", { name: catalog.tabProducts })).toHaveAttribute(
             "aria-selected",
             "true",
         );
-        expect(screen.getByText(catalogo.emptyProductsTitle)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: catalogo.addProduct })).toBeInTheDocument();
-        expect(screen.queryByText(catalogo.emptyFilamentsTitle)).not.toBeInTheDocument();
+        expect(screen.getByText(catalog.emptyProductsTitle)).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: catalog.addProduct })).toBeInTheDocument();
+        expect(screen.queryByText(catalog.emptyFilamentsTitle)).not.toBeInTheDocument();
     });
 
     it("moves selection with the arrow keys (roving tabindex, tablist a11y)", () => {
-        render(<CatalogoPage />);
-        const filaments = screen.getByRole("tab", { name: catalogo.tabFilaments });
+        render(<CatalogPage />);
+        const filaments = screen.getByRole("tab", { name: catalog.tabFilaments });
         fireEvent.keyDown(filaments, { key: "ArrowRight" });
 
         // The a11y contract is unchanged (ArrowRight moves to the next tab); what changed is WHERE that
@@ -199,11 +199,11 @@ describe("CatalogoPage — segmented tabs IA (G1) + premium filament panel", () 
 
     it("mounts the Impressoras premium panel on the printers tab (T022)", () => {
         search.current = { tab: "printers" };
-        render(<CatalogoPage />);
+        render(<CatalogPage />);
 
-        expect(screen.getByText(catalogo.emptyPrintersTitle)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: catalogo.addPrinter })).toBeInTheDocument();
-        expect(screen.queryByText(catalogo.emptyFilamentsTitle)).not.toBeInTheDocument();
+        expect(screen.getByText(catalog.emptyPrintersTitle)).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: catalog.addPrinter })).toBeInTheDocument();
+        expect(screen.queryByText(catalog.emptyFilamentsTitle)).not.toBeInTheDocument();
     });
 });
 
@@ -219,7 +219,7 @@ describe("CatalogoPage — gate não-active (019/PR-B T044, ex-013/FB-02)", () =
             createdAt: "2026-07-09T00:00:00Z",
             updatedAt: "2026-07-09T00:00:00Z",
         });
-        render(<CatalogoPage />);
+        render(<CatalogPage />);
 
         expect(screen.queryByText("Premium pausado")).not.toBeInTheDocument();
         expect(
@@ -234,13 +234,13 @@ describe("CatalogoPage — gate não-active (019/PR-B T044, ex-013/FB-02)", () =
 
     it("'none' (nunca assinou): a MESMA IA (tablist) com o vazio didático — a parede US7 saiu (T044)", () => {
         entitlement.data = { status: "none" };
-        render(<CatalogoPage />);
+        render(<CatalogPage />);
 
         // A parede de antes (o teaser único de página inteira) não existe mais.
         expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
-        expect(screen.getByRole("tablist", { name: catalogo.tabsLabel })).toBeInTheDocument();
+        expect(screen.getByRole("tablist", { name: catalog.tabsLabel })).toBeInTheDocument();
         expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
-        expect(screen.getByText(catalogo.emptyFilamentsTitle)).toBeInTheDocument();
+        expect(screen.getByText(catalog.emptyFilamentsTitle)).toBeInTheDocument();
         expect(screen.queryByText("Premium pausado")).not.toBeInTheDocument();
     });
 });

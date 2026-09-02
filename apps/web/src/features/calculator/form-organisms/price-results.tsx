@@ -10,7 +10,7 @@ import type { PriceResult } from "@3dprecify/pricing-core";
 
 import { captionText, kickerLabel } from "../form-atoms/form-styles";
 import { SectionTitle } from "../form-atoms/section-title";
-import { AvisoDeResultado } from "../form-molecules/aviso-de-resultado";
+import { ResultNotice } from "../form-molecules/result-notice";
 import { CostProportionBar } from "../form-molecules/cost-proportion-bar";
 import { HERO_TONE, heroSizeFor, type PriceLevel } from "../form-logic/price-level";
 import { ChannelPriceBlocks } from "./channel-price-blocks";
@@ -126,7 +126,7 @@ export function PriceResults({
             chega a custo R$ 0,00 e preço de venda R$ 0,00, e o produto entregava isso calado. Cada
             campo em 0 é perfeitamente válido isolado: só o RESULTADO denuncia. Por isso este aviso
             é o único que não mora num campo — não há um campo culpado. */}
-                <AvisoDeResultado result={result} />
+                <ResultNotice result={result} />
                 <Card padding="md" className="flex flex-col gap-3">
                     <div className="flex flex-col">
                         {proportionRows.map((row, i) => (

@@ -163,7 +163,7 @@
 /* Homologação automatizada (2026-08-13) — o AVISO DE PLAUSIBILIDADE.
    Tom `info`, deliberadamente distinto do `--danger` do erro: o número não foi recusado, e uma
    frase pintada de vermelho diria o contrário do que ela está escrita para dizer.
-   Ver `shared/lib/plausibilidade.ts` — "AVISO NUNCA VIRA VALIDAÇÃO".
+   Ver `shared/lib/plausibility.ts` — "AVISO NUNCA VIRA VALIDAÇÃO".
 
    019/PR-C (T118) — dois consertos: (1) a referência apontava para `features/calculator/
    plausibilidade.ts`, que nunca existiu — o módulo sempre morou em `shared/lib` (a razão está no

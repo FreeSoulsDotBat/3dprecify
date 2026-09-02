@@ -21,7 +21,7 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 import { GateChecking, GateError } from "@/pages/historico/history-gate-states";
 import { HistoryLedger } from "@/pages/historico/history-ledger";
 import { HistoryMasterDetail } from "@/pages/historico/history-master-detail";
-import { useHistoricoSearch } from "@/pages/historico/historico-search";
+import { useHistorySearch } from "@/pages/historico/historico-search";
 import { toLineInput } from "@/pages/historico/quote-line-input";
 
 import "./historico-page.css";
@@ -32,7 +32,7 @@ import "./historico-page.css";
 
 const t = messages.history;
 
-export function HistoricoPage() {
+export function HistoryPage() {
     const sessionStatus = useSessionStore((s) => s.status);
     const entitlement = useEntitlement();
     // 013/F-02 (D1=A): `?snapshot=<clientSnapshotId>` — formerly its own 2-segment route
@@ -40,7 +40,7 @@ export function HistoricoPage() {
     // required auth for this param, mirroring the old route's own guard).
     // 019/PR-E (T088) — `?construir=1`, molde de `?produto=novo`/`?snapshot=` (1 segmento, a
     // armadilha de `base:'./'` do 013/F-02): abre o construtor de orçamento NA MESMA rota.
-    const search = useHistoricoSearch();
+    const search = useHistorySearch();
     // 018/US2 — o corte de 1280px decide entre mestre-detalhe e a tela de hoje.
     const isWide = useIsWide();
     // 019/PR-B (T046, prancheta 32f) — a parede caiu: "never-subscribed" e "signed-out" NÃO saltam

@@ -73,12 +73,12 @@ export function planDetail(state: PlanState): string | null {
         case "grace":
             return b.planGrace;
         case "courtesy": {
-            const fonte =
+            const source =
                 state.source === "beta" || state.source === "comp"
                     ? t.planSources[state.source]
                     : t.planSources.comp;
             const quando = data(state.expiresAt);
-            return quando ? `${fonte} · ${t.planExpires} ${quando}` : fonte;
+            return quando ? `${source} · ${t.planExpires} ${quando}` : source;
         }
         case "lapsed":
             return t.planLapsedHint;

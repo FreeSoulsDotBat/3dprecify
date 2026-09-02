@@ -34,7 +34,7 @@ afterEach(() => {
     toastSpy.mockClear();
 });
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 const cf = messages.catalogForm;
 const fields = messages.calculator.fields;
 
@@ -49,13 +49,13 @@ const filA: FilamentOut = {
 };
 
 const copy = {
-    addLabel: catalogo.addFilament,
-    emptyTitle: catalogo.emptyFilamentsTitle,
-    emptyBody: catalogo.emptyFilamentsBody,
+    addLabel: catalog.addFilament,
+    emptyTitle: catalog.emptyFilamentsTitle,
+    emptyBody: catalog.emptyFilamentsBody,
     newTitle: cf.newFilament,
     editTitle: cf.editFilament,
     savedToast: cf.savedFilament,
-    count: (n: number) => catalogo.countFilaments.replace("{n}", String(n)),
+    count: (n: number) => catalog.countFilaments.replace("{n}", String(n)),
 };
 
 function listState(
@@ -123,21 +123,21 @@ describe("CatalogPanel — premium list + create/edit/delete (T019)", () => {
 
     it("shows the empty state with an add action when nothing is saved", () => {
         renderPanel({ list: listState({ items: [] }) });
-        expect(screen.getByText(catalogo.emptyFilamentsTitle)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: catalogo.addFilament })).toBeInTheDocument();
+        expect(screen.getByText(catalog.emptyFilamentsTitle)).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: catalog.addFilament })).toBeInTheDocument();
     });
 
     // 019/PR-F (T098) — a ressalva `staleHint` por linha ("pode estar desatualizada") saiu do ramo
     // mobile também; só resta a faixa única "Modo leitura offline" no topo do painel.
     it("offline (stale): a faixa única aparece, e a linha do mobile não repete o aviso por item", () => {
         renderPanel({ list: listState({ stale: true }) });
-        expect(screen.getByText(catalogo.offlineTitle)).toBeInTheDocument();
-        expect(screen.queryByText(catalogo.staleHint)).not.toBeInTheDocument();
+        expect(screen.getByText(catalog.offlineTitle)).toBeInTheDocument();
+        expect(screen.queryByText(catalog.staleHint)).not.toBeInTheDocument();
     });
 
     it("opens the create sheet, posts the wire body, then closes on success", async () => {
         const { create } = renderPanel();
-        fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
+        fireEvent.click(screen.getByRole("button", { name: catalog.addFilament }));
 
         expect(await screen.findByText(cf.newFilament)).toBeInTheDocument();
         fireEvent.change(field(cf.name), { target: { value: "PETG Preto" } });
@@ -159,7 +159,7 @@ describe("CatalogPanel — premium list + create/edit/delete (T019)", () => {
 
     it("opens the edit sheet pre-filled and PUTs by id", async () => {
         const { update } = renderPanel();
-        fireEvent.click(screen.getByRole("button", { name: `${catalogo.edit} PLA Azul` }));
+        fireEvent.click(screen.getByRole("button", { name: `${catalog.edit} PLA Azul` }));
 
         expect(await screen.findByText(cf.editFilament)).toBeInTheDocument();
         expect(field(cf.name)).toHaveValue("PLA Azul");
@@ -176,7 +176,7 @@ describe("CatalogPanel — premium list + create/edit/delete (T019)", () => {
 
     it("confirms deletion in a dialog before DELETEing by id", async () => {
         const { remove } = renderPanel();
-        fireEvent.click(screen.getByRole("button", { name: `${catalogo.remove} PLA Azul` }));
+        fireEvent.click(screen.getByRole("button", { name: `${catalog.remove} PLA Azul` }));
 
         expect(
             await screen.findByText(cf.deleteTitle.replace("{nome}", "PLA Azul")),
@@ -194,7 +194,7 @@ describe("CatalogPanel — premium list + create/edit/delete (T019)", () => {
             );
         renderPanel({ create });
 
-        fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
+        fireEvent.click(screen.getByRole("button", { name: catalog.addFilament }));
         fireEvent.change(field(cf.name), { target: { value: "PETG Preto" } });
         fireEvent.change(field(fields.costPerRoll), { target: { value: "135,00" } });
         fireEvent.change(field(fields.rollWeight), { target: { value: "1" } });
@@ -229,10 +229,10 @@ describe("CatalogPanel — vazio didático para quem não paga (019/PR-B T037)",
         });
 
         const vazio = screen.getByTestId("vazio-didatico");
-        expect(within(vazio).getByText(catalogo.emptyFilamentsTitle)).toBeInTheDocument();
-        expect(within(vazio).getByText(catalogo.educationalFilamentsBody)).toBeInTheDocument();
+        expect(within(vazio).getByText(catalog.emptyFilamentsTitle)).toBeInTheDocument();
+        expect(within(vazio).getByText(catalog.educationalFilamentsBody)).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
+        fireEvent.click(screen.getByRole("button", { name: catalog.addFilament }));
 
         const frozen = await screen.findByTestId("catalog-form-frozen");
         expect(frozen.tagName.toLowerCase()).toBe("fieldset");
@@ -268,9 +268,9 @@ describe("CatalogPanel — vazio didático para quem não paga (019/PR-B T037)",
         });
 
         const vazio = screen.getByTestId("vazio-didatico");
-        expect(within(vazio).getByText(catalogo.emptyFilamentsTitle)).toBeInTheDocument();
+        expect(within(vazio).getByText(catalog.emptyFilamentsTitle)).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
+        fireEvent.click(screen.getByRole("button", { name: catalog.addFilament }));
 
         const frozen = await screen.findByTestId("catalog-form-frozen");
         expect(frozen).toHaveAttribute("disabled");
@@ -297,14 +297,12 @@ describe("CatalogPanel — lapsed com itens (019/PR-B T038)", () => {
         expect(screen.getByText("PLA Azul")).toBeInTheDocument();
         expect(screen.queryByText("Premium pausado")).not.toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole("button", { name: `${catalogo.edit} PLA Azul` }));
+        fireEvent.click(screen.getByRole("button", { name: `${catalog.edit} PLA Azul` }));
 
         const frozen = await screen.findByTestId("catalog-form-frozen");
         expect(within(frozen).getByRole("textbox", { name: cf.name })).toHaveValue("PLA Azul");
 
-        expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
-            catalogo.reactivateBody,
-        );
+        expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(catalog.reactivateBody);
         const cta = screen.getByTestId("teaser-upgrade-cta");
         expect(cta).toHaveTextContent(messages.billing.reactivateAction);
         expect(cta.closest("fieldset[disabled]")).toBeNull();
@@ -321,7 +319,7 @@ describe("CatalogPanel — lapsed com itens (019/PR-B T038)", () => {
 describe("CatalogPanel — sem toast falso quando create/update ausentes (019/PR-B T106)", () => {
     it("primeira camada: sem onSubmit ligado (gate não-active), um submit nativo no <form> não faz nada", async () => {
         renderPanel({ list: listState({ items: [] }), gate: "never-subscribed" });
-        fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
+        fireEvent.click(screen.getByRole("button", { name: catalog.addFilament }));
 
         const frozen = await screen.findByTestId("catalog-form-frozen");
         const form = frozen.closest("form");
@@ -349,7 +347,7 @@ describe("CatalogPanel — sem toast falso quando create/update ausentes (019/PR
                 deleting={false}
             />,
         );
-        fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
+        fireEvent.click(screen.getByRole("button", { name: catalog.addFilament }));
         fireEvent.change(field(cf.name), { target: { value: "PETG Preto" } });
         fireEvent.change(field(fields.costPerRoll), { target: { value: "135,00" } });
         fireEvent.change(field(fields.rollWeight), { target: { value: "1" } });

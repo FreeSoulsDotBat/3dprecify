@@ -110,7 +110,7 @@ describe("019/ADR-0032 — uma classe tf-*, um arquivo", () => {
       .tf-alert.tf-alert--compact { b: 2 }
       .tf-btn:hover, .tf-btn:focus-visible { c: 3 }
       .assembly .tf-price { d: 4 }
-      .tf-catalogo-head > .tf-page-header { e: 5 }
+      .tf-catalog-head > .tf-page-header { e: 5 }
       .tf-badge.fee-seal { f: 6 }
       .tf-input[disabled] { g: 7 }
       @media (min-width: 1280px) { .tf-shell { h: 8 } }

@@ -12,7 +12,7 @@ const t = messages.calculator;
  * ⚠ @doc DEC-072 — rascunho local SÓ enquanto o texto tem separador: sem ele, digitar `2:30`
  *   fazia o `:` sumir e `"30"` virar 30 HORAS — 60× o pretendido, calado.
  */
-export function CampoDeHoras({
+export function HoursField({
     h,
     min,
     onCommit,

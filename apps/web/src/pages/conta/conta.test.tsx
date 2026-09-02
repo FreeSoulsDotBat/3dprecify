@@ -31,7 +31,7 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 import { signOutUser, useSessionStore } from "@/shared/session/session-store";
 import { THEME_STORAGE_KEY, useThemeStore } from "@/shared/ui";
 
-import { ContaPage } from "./conta-page";
+import { AccountPage } from "./conta-page";
 
 const setup = () => userEvent.setup({ pointerEventsCheck: 0 });
 
@@ -41,7 +41,7 @@ function renderConta() {
     });
     return render(
         <QueryClientProvider client={client}>
-            <ContaPage />
+            <AccountPage />
         </QueryClientProvider>,
     );
 }
@@ -199,7 +199,7 @@ describe("ContaPage identity isolation across users (D1)", () => {
         const renderShared = () =>
             render(
                 <QueryClientProvider client={client}>
-                    <ContaPage />
+                    <AccountPage />
                 </QueryClientProvider>,
             );
 

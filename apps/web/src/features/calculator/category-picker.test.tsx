@@ -217,13 +217,13 @@ describe("CategoryPicker — o estado escolhido é anunciado e o foco não se pe
 describe("CategoryPicker — o contrato ARIA anunciado é o cumprido (T117)", () => {
     it("não anuncia um combobox que não existe, e a lista não se diz uma listbox", async () => {
         const { user } = setup();
-        const campo = screen.getByRole("textbox", { name: /categoria/i });
-        expect(campo).not.toHaveAttribute("role");
-        expect(campo).not.toHaveAttribute("aria-expanded");
+        const field = screen.getByRole("textbox", { name: /categoria/i });
+        expect(field).not.toHaveAttribute("role");
+        expect(field).not.toHaveAttribute("aria-expanded");
         // O pior dos três: apontava para um id ausente do DOM sempre que a lista estava fechada.
-        expect(campo).not.toHaveAttribute("aria-controls");
+        expect(field).not.toHaveAttribute("aria-controls");
 
-        await user.type(campo, "celulares");
+        await user.type(field, "celulares");
         expect(screen.queryByRole("listbox")).toBeNull();
         // O que sobra é o que existe: uma lista de botões ativáveis por teclado.
         expect(within(screen.getByRole("list")).getAllByRole("button").length).toBeGreaterThan(0);

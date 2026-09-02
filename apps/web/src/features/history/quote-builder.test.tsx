@@ -474,10 +474,10 @@ describe("abaixo do custo AVISA, nunca bloqueia (Q10, ADR-0034 §1.5)", () => {
         await user.clear(screen.getByTestId("quote-discount-value"));
         await user.type(screen.getByTestId("quote-discount-value"), "90");
 
-        const aviso = screen.getByTestId("quote-below-cost");
-        expect(aviso).toBeVisible();
+        const notice = screen.getByTestId("quote-below-cost");
+        expect(notice).toBeVisible();
         // A frase é a da prancheta, com o quanto falta — nunca um "não pode" genérico.
-        expect(aviso.textContent).toContain(t.belowCost.split("{valor}")[0]?.trim());
+        expect(notice.textContent).toContain(t.belowCost.split("{valor}")[0]?.trim());
         // O que esta fatia NÃO faz: bloquear. Vender abaixo do custo é decisão do vendedor.
         expect(screen.getByTestId("quote-send")).toBeEnabled();
     });

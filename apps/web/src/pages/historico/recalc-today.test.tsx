@@ -376,7 +376,7 @@ describe("RecalcTodayButton — a NEW record, the original untouched", () => {
             await user.click(screen.getByRole("button", { name: t.recalcAction }));
             await screen.findByText(/Isso cria um NOVO registro/); // the dialog did open
             expect(
-                screen.queryByText(/O modelo atual não tem mais esse campo/),
+                screen.queryByText(/O modelo atual não tem mais esse field/),
             ).not.toBeInTheDocument();
         });
     });

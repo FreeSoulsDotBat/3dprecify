@@ -139,7 +139,7 @@ vi.mock("@/entities/scenario/use-scenarios", () => ({
 
 import { ProdutoPage } from "./produto-page";
 
-const catalogo = messages.catalog;
+const catalog = messages.catalog;
 
 function listState(items: unknown[]) {
     return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };
@@ -215,6 +215,6 @@ describe("019/PR-D (T125) — o render: PriceHero vem de recomputed ou sellerFix
         );
 
         expect(screen.queryByText("999")).not.toBeInTheDocument();
-        expect(screen.getByText(catalogo.suggestedRetail)).toBeInTheDocument();
+        expect(screen.getByText(catalog.suggestedRetail)).toBeInTheDocument();
     });
 });

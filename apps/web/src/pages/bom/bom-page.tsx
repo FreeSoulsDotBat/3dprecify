@@ -13,7 +13,7 @@ import { honestWriteError } from "@/shared/api/error-messages";
 import { useIsWide } from "@/shared/lib/use-is-wide";
 import type { BomOut, Materialization } from "@/shared/api/generated";
 import { premiumGate, type PremiumGate } from "@/shared/billing/premium-gate";
-import { VazioDidatico } from "@/shared/billing/vazio-didatico";
+import { DidacticEmpty } from "@/shared/billing/didactic-empty";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
@@ -443,7 +443,7 @@ function BomComposer({ staleEntitlement, gate }: { staleEntitlement: boolean; ga
                     // 019/PR-B (T046, detalhe 2/prancheta 32c): o vazio didático troca o vazio "de quem
                     // paga" — a mesma forma, a frase mais longa, e o ÚNICO convite da tela (`teaser` default
                     // true — some quando ≥1 linha, cujo rodapé passa a carregar o convite).
-                    <VazioDidatico feature="kits" gate={gate} action={emptyActions} />
+                    <DidacticEmpty feature="kits" gate={gate} action={emptyActions} />
                 )
             ) : (
                 // 018/US3 — duas colunas no desktop: peças à esquerda, resumo à direita.

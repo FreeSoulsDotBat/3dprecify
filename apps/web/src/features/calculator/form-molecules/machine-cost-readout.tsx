@@ -9,7 +9,7 @@ const t = messages.calculator;
 
 // 019/PR-C (T057, prancheta 15) — pt-BR só de agrupamento (sem casas), para a divisão do readout
 // ("de R$ 4.000,00 ÷ 3.600 h") e para os números da confirmação ("2.000 h" / "3.600 h").
-export function fmtHoras(n: number): string {
+export function formatHours(n: number): string {
     return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(n);
 }
 
@@ -54,7 +54,7 @@ export function MachineCostReadout({
             <span className="tf-tnum" style={captionText}>
                 {t.machineCost.readoutDivision
                     .replace("{valor}", formatBRL(machineValueNum))
-                    .replace("{horas}", fmtHoras(currentHours))}
+                    .replace("{horas}", formatHours(currentHours))}
             </span>
         </div>
     );

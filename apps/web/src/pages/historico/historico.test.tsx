@@ -31,7 +31,7 @@ import type { HistoryItem } from "@/entities/history/outbox";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 
-import { HistoricoPage } from "./historico-page";
+import { HistoryPage } from "./historico-page";
 
 // 009/T012 (E4, PR-A) — the Histórico list, written FAILING-first (US2).
 //
@@ -109,7 +109,7 @@ afterEach(() => cleanup());
 describe("a card is a ledger row, never a live price", () => {
     it("carries the DATE on every card, and the money is 'Valor cotado' — never 'Preço'", () => {
         useHistoryMock.mockReturnValue(listState({ items: [item()] }));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText(/Cotado em 12\/07\/2026/)).toBeInTheDocument();
         expect(screen.getByText(t.quotedValue)).toBeInTheDocument();
@@ -133,7 +133,7 @@ describe("a card is a ledger row, never a live price", () => {
                 ],
             }),
         );
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getAllByText(t.adhocFallback)).toHaveLength(2);
     });
@@ -144,7 +144,7 @@ describe("a card is a ledger row, never a live price", () => {
                 items: [item({ id: null, syncState: "pending", headlineTotal: "21.90" })],
             }),
         );
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText(t.syncPendingBadge)).toBeInTheDocument();
         expect(screen.getByText("R$ 21,90")).toBeInTheDocument();
@@ -156,7 +156,7 @@ describe("the queue banner — the state that needs a decision wins", () => {
         useHistoryMock.mockReturnValue(
             listState({ items: [item({ id: null, syncState: "pending" })] }),
         );
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText(t.queuePending.replace("{n}", "1"))).toBeInTheDocument();
         expect(screen.getByRole("button", { name: t.syncNow })).toBeInTheDocument();
@@ -167,7 +167,7 @@ describe("the queue banner — the state that needs a decision wins", () => {
         useHistoryMock.mockReturnValue(
             listState({ items: [item({ id: null, syncState: "pending" })] }),
         );
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText(t.queuePendingOffline.replace("{n}", "1"))).toBeInTheDocument();
         expect(screen.queryByRole("button", { name: t.syncNow })).not.toBeInTheDocument();
@@ -179,7 +179,7 @@ describe("the queue banner — the state that needs a decision wins", () => {
         useHistoryMock.mockReturnValue(
             listState({ items: [item({ id: null, syncState: "unauthenticated" })] }),
         );
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         const banner = screen.getByText(t.queueUnauthenticated.replace("{n}", "1"));
         expect(banner).toBeInTheDocument();
@@ -199,7 +199,7 @@ describe("the queue banner — the state that needs a decision wins", () => {
                 ],
             }),
         );
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
         expect(screen.getByText(t.queueUnauthenticated.replace("{n}", "1"))).toBeInTheDocument();
 
         cleanup();
@@ -211,7 +211,7 @@ describe("the queue banner — the state that needs a decision wins", () => {
                 ],
             }),
         );
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
         expect(screen.getByText(t.queueFailed.replace("{n}", "1"))).toBeInTheDocument();
         expect(
             screen.queryByText(t.queueUnauthenticated.replace("{n}", "1")),
@@ -222,7 +222,7 @@ describe("the queue banner — the state that needs a decision wins", () => {
         useHistoryMock.mockReturnValue(
             listState({ items: [item({ id: null, syncState: "unauthenticated" })] }),
         );
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
         expect(screen.getByText(t.syncUnauthenticatedBadge)).toBeInTheDocument();
         expect(screen.queryByText(t.syncPendingBadge)).not.toBeInTheDocument();
         expect(screen.queryByText(t.syncBlockedBadge)).not.toBeInTheDocument();
@@ -238,7 +238,7 @@ describe("the queue banner — the state that needs a decision wins", () => {
                 ],
             }),
         );
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText(t.queueFailed.replace("{n}", "1"))).toBeInTheDocument();
         expect(screen.queryByText(t.queuePending.replace("{n}", "1"))).not.toBeInTheDocument();
@@ -256,7 +256,7 @@ describe("the queue banner — the state that needs a decision wins", () => {
                 ],
             }),
         );
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText(t.queueFailed.replace("{n}", "1"))).toBeInTheDocument();
         // The drain button is present again — the healthy pendings can be sent by hand.
@@ -276,7 +276,7 @@ describe("C5 — the gate has a branch for 'the server never answered about the 
             isFetching: false,
             refetch: vi.fn(),
         });
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText(t.guardError)).toBeInTheDocument();
         expect(screen.getByRole("button", { name: t.guardRetry })).toBeInTheDocument();
@@ -288,7 +288,7 @@ describe("C5 — the gate has a branch for 'the server never answered about the 
 
 describe("states", () => {
     it("empty: it says what to do, and does NOT fabricate a sample entry", () => {
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText(t.emptyTitle)).toBeInTheDocument();
         expect(screen.getByText(t.emptyBody)).toBeInTheDocument();
@@ -297,7 +297,7 @@ describe("states", () => {
 
     it("a COLD read failure (nothing cached, nothing queued) shows the error and a retry", () => {
         useHistoryMock.mockReturnValue(listState({ isError: true }));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText(t.loadError)).toBeInTheDocument();
         expect(screen.getByRole("button", { name: t.retry })).toBeInTheDocument();
@@ -305,7 +305,7 @@ describe("states", () => {
 
     it("never an error wall OVER data the seller already holds — the rows render, a strip warns", () => {
         useHistoryMock.mockReturnValue(listState({ items: [item()], stale: true }));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText("R$ 275,00")).toBeInTheDocument(); // the rows are there…
         expect(screen.getByText(t.loadError)).toBeInTheDocument(); // …and the failure is stated
@@ -317,7 +317,7 @@ describe("states", () => {
         // telling someone offline that their read "failed" is another. Same state, two honest readings.
         Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
         useHistoryMock.mockReturnValue(listState({ items: [item()], stale: true }));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText(t.offlineTitle)).toBeInTheDocument();
         expect(screen.queryByText(t.loadError)).not.toBeInTheDocument();
@@ -333,7 +333,7 @@ describe("states", () => {
             refetch: vi.fn(),
         });
         useHistoryMock.mockReturnValue(listState({ items: [item()] }));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();
         expect(screen.getByText("R$ 275,00")).toBeInTheDocument();
@@ -353,7 +353,7 @@ describe("US6 — filtering the ledger (search + período)", () => {
     it("passes a DEBOUNCED label search to useHistory, never one call per keystroke", async () => {
         const user = setup();
         useHistoryMock.mockReturnValue(listState({ items: [item()] }));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         await user.type(screen.getByLabelText(t.searchLabel), "Maria");
         await waitFor(() => expect(useHistoryMock).toHaveBeenCalledWith({ q: "Maria" }));
@@ -362,7 +362,7 @@ describe("US6 — filtering the ledger (search + período)", () => {
     it("a período preset sends a device-date lower bound; 'Tudo' clears it", async () => {
         const user = setup();
         useHistoryMock.mockReturnValue(listState({ items: [item()] }));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         await user.click(screen.getByRole("button", { name: t.period30 }));
         expect(useHistoryMock.mock.lastCall?.[0]).toEqual(
@@ -380,7 +380,7 @@ describe("US6 — filtering the ledger (search + período)", () => {
         useHistoryMock.mockImplementation((filters?: { q?: string }) =>
             listState({ items: filters?.q ? [] : [item()] }),
         );
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         await user.type(screen.getByLabelText(t.searchLabel), "zzz");
         await waitFor(() =>
@@ -409,7 +409,7 @@ describe("US6 — lazy pagination ([Carregar mais])", () => {
         const user = setup();
         const loadMore = vi.fn();
         useHistoryMock.mockReturnValue(listState({ items: [item()], hasMore: true, loadMore }));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         await user.click(screen.getByRole("button", { name: t.loadMore }));
         expect(loadMore).toHaveBeenCalledTimes(1);
@@ -417,7 +417,7 @@ describe("US6 — lazy pagination ([Carregar mais])", () => {
 
     it("hides [Carregar mais] when the ledger is fully loaded", () => {
         useHistoryMock.mockReturnValue(listState({ items: [item()], hasMore: false }));
-        render(<HistoricoPage />);
+        render(<HistoryPage />);
 
         expect(screen.queryByRole("button", { name: t.loadMore })).not.toBeInTheDocument();
     });
