@@ -389,7 +389,7 @@ describe("FeeSeal — o catch-all (13b·5) é linha do corpo, nunca pílula", ()
 describe("a janela de obsolescência é de 45 dias (T052/FR-020b) — comentário do componente corrigido", () => {
     const dia = 24 * 60 * 60 * 1000;
     const lido = Date.parse("2026-08-01");
-    const selo = (diasDepois: number) =>
+    const seal = (diasDepois: number) =>
         feeSealState({
             entry: {
                 determinants: null,
@@ -413,9 +413,9 @@ describe("a janela de obsolescência é de 45 dias (T052/FR-020b) — comentári
     });
 
     it("um ciclo mensal inteiro (31 dias) não alarma; passado ciclo+folga (46), alarma", () => {
-        expect(selo(31)).toMatchObject({ stale: false });
-        expect(selo(45)).toMatchObject({ stale: false });
-        expect(selo(46)).toMatchObject({ stale: true });
+        expect(seal(31)).toMatchObject({ stale: false });
+        expect(seal(45)).toMatchObject({ stale: false });
+        expect(seal(46)).toMatchObject({ stale: true });
     });
 });
 

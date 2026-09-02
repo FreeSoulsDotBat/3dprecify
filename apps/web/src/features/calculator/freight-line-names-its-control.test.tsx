@@ -196,10 +196,10 @@ describe("hotfix 016/A2 (H2c) — o subsídio de frete da Shopee é INFORMAÇÃO
     });
 
     it("catálogo SEM freightSubsidyInfo (ML, Amazon) ⇒ nenhuma legenda — dirigido por dado", () => {
-        const semCampo: FeeCatalog = structuredClone(catalogWithSubsidy);
-        const shopee = semCampo.marketplaces.find((m) => m.marketplace === "SHOPEE")!;
+        const withoutField: FeeCatalog = structuredClone(catalogWithSubsidy);
+        const shopee = withoutField.marketplaces.find((m) => m.marketplace === "SHOPEE")!;
         delete shopee.freightSubsidyInfo;
-        render(<Harness catalog={semCampo} />);
+        render(<Harness catalog={withoutField} />);
         expect(screen.queryByTestId("freight-subsidy-info")).not.toBeInTheDocument();
     });
 

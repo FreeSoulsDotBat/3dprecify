@@ -51,9 +51,9 @@ describe("readSellerFixedPrice — undefined (cache pré-0008) e null (servidor)
     });
 
     it("undefined (item do cache gravado antes da 0008) ⇒ null, NUNCA 0", () => {
-        const semCampo = product();
-        delete (semCampo as Partial<ProductOut>).sellerFixedPrice;
-        expect(readSellerFixedPrice(semCampo)).toBeNull();
+        const withoutField = product();
+        delete (withoutField as Partial<ProductOut>).sellerFixedPrice;
+        expect(readSellerFixedPrice(withoutField)).toBeNull();
     });
 
     it("fixado ⇒ o número", () => {

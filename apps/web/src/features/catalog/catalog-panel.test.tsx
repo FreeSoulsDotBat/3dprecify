@@ -228,9 +228,9 @@ describe("CatalogPanel — vazio didático para quem não paga (019/PR-B T037)",
             gate: "never-subscribed",
         });
 
-        const vazio = screen.getByTestId("vazio-didatico");
-        expect(within(vazio).getByText(catalog.emptyFilamentsTitle)).toBeInTheDocument();
-        expect(within(vazio).getByText(catalog.educationalFilamentsBody)).toBeInTheDocument();
+        const empty = screen.getByTestId("vazio-didatico");
+        expect(within(empty).getByText(catalog.emptyFilamentsTitle)).toBeInTheDocument();
+        expect(within(empty).getByText(catalog.educationalFilamentsBody)).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole("button", { name: catalog.addFilament }));
 
@@ -267,8 +267,8 @@ describe("CatalogPanel — vazio didático para quem não paga (019/PR-B T037)",
             gate: "signed-out",
         });
 
-        const vazio = screen.getByTestId("vazio-didatico");
-        expect(within(vazio).getByText(catalog.emptyFilamentsTitle)).toBeInTheDocument();
+        const empty = screen.getByTestId("vazio-didatico");
+        expect(within(empty).getByText(catalog.emptyFilamentsTitle)).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole("button", { name: catalog.addFilament }));
 

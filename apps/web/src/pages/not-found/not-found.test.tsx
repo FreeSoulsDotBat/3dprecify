@@ -27,13 +27,13 @@ async function renderNotFound() {
         path: "/",
         component: NotFoundPage,
     });
-    const calcular = createRoute({
+    const calculate = createRoute({
         getParentRoute: () => rootRoute,
         path: "/calcular",
         component: () => <main>calcular</main>,
     });
     const router = createRouter({
-        routeTree: rootRoute.addChildren([home, calcular]),
+        routeTree: rootRoute.addChildren([home, calculate]),
         history: createMemoryHistory({ initialEntries: ["/"] }),
     });
     render(<RouterProvider router={router} />);

@@ -183,15 +183,17 @@ describe("016/PR-F — a curadoria desta fatia no artefato servido", () => {
                 // A propriedade que fez do subsídio um CAMPO NOVO e não um `kind` do union `freight`: um
                 // cliente antigo descarta a propriedade extra e continua lendo o catálogo inteiro. Aqui a
                 // simetria: um catálogo antigo (sem o campo) continua válido para o cliente novo.
-                const semCampo = structuredClone(servedCatalog) as {
+                const withoutField = structuredClone(servedCatalog) as {
                     marketplaces: Record<string, unknown>[];
                 };
-                for (const m of semCampo.marketplaces) delete m.freightSubsidyInfo;
-                const parsed = parseFeeCatalog(semCampo);
-                const shopeeSemCampo = parsed.marketplaces.find((m) => m.marketplace === "SHOPEE")!;
-                expect(shopeeSemCampo.freightSubsidyInfo ?? null).toBeNull();
+                for (const m of withoutField.marketplaces) delete m.freightSubsidyInfo;
+                const parsed = parseFeeCatalog(withoutField);
+                const shopeeWithoutField = parsed.marketplaces.find(
+                    (m) => m.marketplace === "SHOPEE",
+                )!;
+                expect(shopeeWithoutField.freightSubsidyInfo ?? null).toBeNull();
                 // E o resto do documento é IGUAL — o campo não carrega nada de que outra folha dependa.
-                expect({ ...shopeeSemCampo, freightSubsidyInfo: undefined }).toEqual({
+                expect({ ...shopeeWithoutField, freightSubsidyInfo: undefined }).toEqual({
                     ...shopee,
                     freightSubsidyInfo: undefined,
                 });

@@ -53,7 +53,7 @@ const lidoAmazon: CollectorVerdict = {
     },
 };
 
-const dispensaNegada = classifyExemption({
+const exemptionDenied = classifyExemption({
     permitida: false,
     diffSoInerte: true,
     arquivosDoPr: ["backend/app/data/catalog.json"],
@@ -64,7 +64,7 @@ const padrao = {
     vereditos: resolverVereditos([lidoAmazon]),
     diff: semMudanca,
     vigias: [],
-    dispensa: dispensaNegada,
+    exemption: exemptionDenied,
 };
 
 describe("§3 — os TRÊS estados, SEMPRE, para TODOS os marketplaces (US2/AC3, SC-1003)", () => {
@@ -196,7 +196,7 @@ describe("§5 — a seção de vigias, cujo TÍTULO diz que nada de dado mudou",
     });
 
     it("vigia com notícia + catálogo INTACTO ⇒ §5 presente, §4 ausente, dispensa NEGADA pelo eixo (b)", () => {
-        const dispensa = classifyExemption({
+        const exemption = classifyExemption({
             permitida: true,
             diffSoInerte: true,
             arquivosDoPr: [
@@ -205,11 +205,11 @@ describe("§5 — a seção de vigias, cujo TÍTULO diz que nada de dado mudou",
             ],
             contemFolhaDeOcr: false,
         });
-        const body = monthlyPrBody({ ...padrao, vigias: [vigia], dispensa });
+        const body = monthlyPrBody({ ...padrao, vigias: [vigia], exemption });
         expect(body).toContain("## Vigias (nenhum dado alterado)");
         expect(body).not.toContain(CHANGES_HEADING);
         expect(body).toContain("amazon-precos.baseline.json");
-        expect(body).toMatch(/dispensa.*(negada|NÃO)/i);
+        expect(body).toMatch(/exemption.*(negada|NÃO)/i);
     });
 });
 
@@ -260,14 +260,14 @@ describe("§6 — o rodapé de dispensa imprime o ESTADO e o PORQUÊ (P0-b)", ()
     });
 
     it("ligada e concedida: o corpo diz que foi concedida e sob qual condição", () => {
-        const dispensa = classifyExemption({
+        const exemption = classifyExemption({
             permitida: true,
             diffSoInerte: true,
             arquivosDoPr: ["backend/app/data/catalog.json"],
             contemFolhaDeOcr: false,
         });
-        const body = monthlyPrBody({ ...padrao, dispensa });
-        expect(body).toMatch(/dispensa.*concedida/i);
+        const body = monthlyPrBody({ ...padrao, exemption });
+        expect(body).toMatch(/exemption.*concedida/i);
         expect(body).toContain("inerte");
     });
 

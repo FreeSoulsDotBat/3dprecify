@@ -30,7 +30,7 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
-import { AccountPage } from "@/pages/conta/conta-page";
+import { AccountPage } from "@/pages/account/account-page";
 import { TopBar } from "@/widgets/top-bar/top-bar";
 
 // 009/T011 (E4, PR-A) — EVERY sign-out entry point goes through the seam.
@@ -89,7 +89,7 @@ function renderTopBar() {
     return render(<RouterProvider router={router} />);
 }
 
-function renderConta() {
+function renderAccount() {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
     return render(
         <QueryClientProvider client={client}>
@@ -111,7 +111,7 @@ describe("both sign-out entry points route through requestSignOut (never signOut
 
     it("the Conta page's Sair goes through the seam", async () => {
         const user = setup();
-        renderConta();
+        renderAccount();
 
         await user.click(
             screen.getByRole("button", { name: new RegExp(messages.account.signOut) }),

@@ -246,9 +246,9 @@ describe("optionalSurcharges (US16)", () => {
 
     it("exige procedência — o valor é dinheiro e não pode existir sem fonte (Constituição II)", () => {
         for (const field of ["sourceUrl", "source", "effectiveDate", "lastReviewed"]) {
-            const semCampo: Record<string, unknown> = { ...volumoso };
-            delete semCampo[field];
-            expect(() => feeCatalogSchema.parse(doc([semCampo]))).toThrow();
+            const withoutField: Record<string, unknown> = { ...volumoso };
+            delete withoutField[field];
+            expect(() => feeCatalogSchema.parse(doc([withoutField]))).toThrow();
         }
     });
 

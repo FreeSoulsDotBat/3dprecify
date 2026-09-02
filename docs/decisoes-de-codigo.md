@@ -367,7 +367,7 @@ numa edição mudaria o número daquele documento por um motivo que o vendedor n
 
 **Fronteira** (Princípio VIII, precedente T124 da PR-D): `features/history` não importa
 `features/calculator` nem `features/bom` (`eslint-boundaries`). Quem sabe transformar um PRODUCT/KIT
-do Catálogo num `PriceInput` é a PAGE (`pages/historico/quote-line-input.ts`), que injeta
+do Catálogo num `PriceInput` é a PAGE (`pages/history/quote-line-input.ts`), que injeta
 `toLineInput`. Este arquivo só sabe SOMAR o que já veio pronto — nenhuma linha dele chama
 `computeFromForm`.
 
@@ -495,7 +495,7 @@ Esta superfície renderiza um DOCUMENTO ([[DEC-008]]), e é definida por três p
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/historico/snapshot-detail-page.tsx` → `SnapshotDetailPage`
+- `apps/web/src/pages/history/snapshot-detail-page.tsx` → `SnapshotDetailPage`
 
 ---
 
@@ -682,7 +682,7 @@ lugar mais fácil de quebrar a regra das duas prateleiras ([[DEC-008]]). Três r
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/historico/compare-today.tsx` → `CompareToday`
+- `apps/web/src/pages/history/compare-today.tsx` → `CompareToday`
 
 ---
 
@@ -706,13 +706,13 @@ de sempre e vira "Salvar"/"Salvar alterações" SEMPRE renderizado (`type="butto
 rodapé ganha a frase mais o convite único — mesma regra do `FilamentForm`/`PrinterForm`, sem duplicar
 a lógica.
 
-O `gate` chega pronto da `CatalogoPage` (o mesmo `premiumGate()` que os quatro painéis leem) em vez de
+O `gate` chega pronto da `CatalogPage` (o mesmo `premiumGate()` que os quatro painéis leem) em vez de
 um `readOnly` binário: **o 013/FB-02 só cobria `lapsed`**, e um `never-subscribed` que abrisse esta URL
 direto via `?produto=` chegava com o formulário VIVO — bug fechado ali.
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/catalogo/produto-page.tsx` → `ProdutoPage`, `PremiumGate`
+- `apps/web/src/pages/catalog/product-page.tsx` → `ProductPage`, `PremiumGate`
 
 ---
 
@@ -1774,7 +1774,7 @@ affordance de salvar em vez de persistir uma intenção quebrada**.
 produto do catálogo (ao contrário de uma linha de BOM), então todo cenário salvo a partir dela é
 `AD_HOC`.
 
-**T021b — `productRef`**: quando o chamador é a `ProdutoPage` (que monta ESTE MESMO corpo de
+**T021b — `productRef`**: quando o chamador é a `ProductPage` (que monta ESTE MESMO corpo de
 formulário sobre um produto SALVO), ela entrega o `{id, name}` aqui e a base capturada vira `PRODUCT`
 em vez de `AD_HOC`, fechando a FR-606a do lado da UI. Base `KIT` está fora do escopo desta função —
 Calcular e ProdutoPage são superfícies de peça única.
@@ -1829,7 +1829,7 @@ como intenção de retorno ([[DEC-006]]).
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/historico/history-queue-banner.tsx` → `QueueBanner`
+- `apps/web/src/pages/history/history-queue-banner.tsx` → `QueueBanner`
 
 ---
 
@@ -1875,7 +1875,7 @@ products/kits).
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/catalogo/catalogo-page.tsx` → `TabId`
+- `apps/web/src/pages/catalog/catalog-page.tsx` → `TabId`
 
 ---
 
@@ -1947,7 +1947,7 @@ acreditando que o orçamento nunca foi feito.
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/historico/historico-page.tsx` → `HistoryPage`
+- `apps/web/src/pages/history/history-page.tsx` → `HistoryPage`
 
 ---
 
@@ -2357,7 +2357,7 @@ produto monta o MESMO corpo, mantendo o SC-305 idêntico nas duas superfícies (
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `computeFromForm`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `computeFromForm`
 
 ---
 
@@ -2571,7 +2571,7 @@ Três guardas a mais, da revisão do main loop:
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/catalogo/catalogo-page.tsx` → `useObservePrices`
+- `apps/web/src/pages/catalog/catalog-page.tsx` → `useObservePrices`
 
 ---
 
@@ -2975,7 +2975,7 @@ Duas armadilhas fechadas aqui, e as duas custaram defeito:
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `computeFormSignature`, `cleanSignature`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `computeFormSignature`, `cleanSignature`
 
 ---
 
@@ -2996,7 +2996,7 @@ falso. Só sobre um estado POSITIVAMENTE conhecido como não-premium ([[DEC-037]
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `showTeaserSlot`, `useFilaments`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `showTeaserSlot`, `useFilaments`
 
 ---
 
@@ -3017,7 +3017,7 @@ que falhou vira uma retentativa não-bloqueante — **nunca um muro de erro** ([
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `marketplaceEntitled`, `useFeeCatalog`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `marketplaceEntitled`, `useFeeCatalog`
 
 ---
 
@@ -3047,7 +3047,7 @@ Duas referências, e cada uma existe por um motivo diferente:
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `wideMainRef`, `wideAsideRef`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `wideMainRef`, `wideAsideRef`
 
 ---
 
@@ -3068,7 +3068,7 @@ procedência nenhuma**.
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `scenarioProvenance`, `storedBasis`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `scenarioProvenance`, `storedBasis`
 
 ---
 
@@ -3087,7 +3087,7 @@ coisas na mesma linha. O que mudou foi só QUANDO ela é lida.
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `PageHeader`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `PageHeader`
 
 ---
 
@@ -3109,7 +3109,7 @@ a promessa VIVA no lugar ([[DEC-048]] — simulação é viva, nunca datada).
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `scenariosOpen`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `scenariosOpen`
 
 ---
 
@@ -3129,7 +3129,7 @@ de todas as linhas.
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `discardedNotice`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `discardedNotice`
 
 ---
 
@@ -3150,7 +3150,7 @@ formulário escalar ([[DEC-119]]).
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `KitBasisSummary`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `KitBasisSummary`
 
 ---
 
@@ -3166,7 +3166,7 @@ A guarda antiga morreu junto com o componente apagado naquela fatia; esta é a r
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `scenariosOpen`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `scenariosOpen`
 
 ---
 
@@ -3191,7 +3191,7 @@ nunca renderiza), então nenhuma guarda de geometria existente regrediu.
 
 ### Onde isso vive no código
 
-- `apps/web/src/pages/calcular/calcular-page.tsx` → `CalculatorGrid`
+- `apps/web/src/pages/calculator/calculator-page.tsx` → `CalculatorGrid`
 
 ---
 

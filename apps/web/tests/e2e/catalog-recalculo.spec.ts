@@ -6,8 +6,7 @@ import { E2E_BACKEND_URL } from "../../playwright.config";
 import { captureEntitlementBearerToken } from "./billing-helpers";
 import { goOffline, goOnline, grantPremium, signUpThrowaway } from "./history-helpers";
 
-// 019/PR-D (T069) e2e — o recálculo do Catálogo contra a stack REAL: `pages/catalogo/
-// catalogo-page.tsx` recomputa cada produto com o motor real (`computeFromForm`) só quando
+// 019/PR-D (T069) e2e — o recálculo do Catálogo contra a stack REAL: `pages/catalog/catalog-page.tsx` recomputa cada produto com o motor real (`computeFromForm`) só quando
 // filamentos/impressoras resolveram, injeta o resultado na lista, e — só com a LISTA visível
 // (`?produto=` ausente), online, sem erro de leitura das observações — grava em lote
 // `PUT /api/v1/price-observations` (dedupe por assinatura na sessão do hook, `5128402`). Molde:
@@ -117,7 +116,7 @@ function productRow(page: Page, name: string) {
 }
 
 // Correção de fidelidade (019/PR-D): "Manter"/"Aceitar novo preço"/"Voltar a acompanhar o custo"
-// vivem só no ITEM ABERTO (ficha, `pages/catalogo/produto-page.tsx`), nunca na lista — nenhuma
+// vivem só no ITEM ABERTO (ficha, `pages/catalog/product-page.tsx`), nunca na lista — nenhuma
 // prancheta (16a/16b/17c) desenha esses dois blocos na lista. Molde:
 // `porte-screenshots-pr-d.spec.ts`'s `openProductFicha`.
 async function openProductFicha(page: Page, name: string): Promise<void> {

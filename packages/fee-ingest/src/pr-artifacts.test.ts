@@ -23,7 +23,7 @@ const outcomePr: RunOutcome = {
     kind: "PR",
     titulo: "Tarifas — leitura de 2026-09-01",
     body: "## Estado por marketplace\n\n(conteúdo de teste)",
-    dispensa: false,
+    exemption: false,
     decisaoDoDono: false,
     catalog: { catalogVersion: "2026-09-01.0" },
     vereditos: vereditosVazios,

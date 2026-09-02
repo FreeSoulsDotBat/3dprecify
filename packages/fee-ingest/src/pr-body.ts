@@ -57,7 +57,7 @@ export type BodyArgs = {
     vereditos: Record<Mk, CollectorVerdict>;
     diff: CatalogDiff;
     vigias: readonly RelatoDeVigia[];
-    dispensa: ExemptionDecision;
+    exemption: ExemptionDecision;
     folhasDeOcr?: readonly FolhaDeOcr[];
     decisao?: SecaoDeDecisao;
 };
@@ -127,7 +127,7 @@ function removalProvenance(vereditos: Record<Mk, CollectorVerdict>, marketplace:
  * mesmos bytes — que é o que torna a idempotência do §C.4 verificável.
  */
 export function monthlyPrBody(args: BodyArgs): string {
-    const { vereditos, diff, vigias, dispensa } = args;
+    const { vereditos, diff, vigias, exemption } = args;
     const folhasDeOcr = args.folhasDeOcr ?? [];
     const out: string[] = [];
 
@@ -258,7 +258,7 @@ export function monthlyPrBody(args: BodyArgs): string {
         "---",
         "",
         "**Dispensa de revisão (`ALLOW_FRESHNESS_EXEMPTION`)**: " +
-            `${dispensa.concedida ? "CONCEDIDA" : "NEGADA"} — ${dispensa.motivo}.`,
+            `${exemption.concedida ? "CONCEDIDA" : "NEGADA"} — ${exemption.motivo}.`,
     );
     return out.join("\n");
 }

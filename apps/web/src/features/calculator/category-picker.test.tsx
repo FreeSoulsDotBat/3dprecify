@@ -122,7 +122,7 @@ describe("CategoryPicker — o estado vazio não afirma o que não é verdade (F
         setup({ spine: [], hasFeeReference: true });
         const nota = screen.getByRole("status").textContent ?? "";
         expect(nota).toMatch(/categorias/i); // o que de fato está faltando
-        expect(nota).not.toMatch(/correta/i); // quem fala da taxa é o selo, não o seletor
+        expect(nota).not.toMatch(/correta/i); // quem fala da taxa é o seal, não o seletor
         expect(nota).not.toMatch(/conecte/i); // o seletor não sabe se conectar resolve
     });
 });

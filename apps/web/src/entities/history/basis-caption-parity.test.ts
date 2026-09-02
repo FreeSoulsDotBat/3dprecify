@@ -36,7 +36,7 @@ function canonicalHeadlineBasisValues(): string[] {
         };
     };
     const values = spec.components.schemas.SnapshotIn.properties.headlineBasis.enum;
-    expect(values.length).toBeGreaterThan(0); // um enum vazio derrotaria a guarda em silêncio
+    expect(values.length).toBeGreaterThan(0); // um enum empty derrotaria a guarda em silêncio
     return values;
 }
 

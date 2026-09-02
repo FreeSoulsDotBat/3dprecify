@@ -249,7 +249,7 @@ describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
 
     // 019/PR-D (correção de fidelidade) — nenhuma prancheta (16a/16b/17c) desenha o aviso
     // "custo hoje > fixado" nem "Manter {valor}" NA LISTA; os dois vivem só no ITEM ABERTO
-    // (`pages/catalogo/produto-page.test.tsx`). A LISTA nunca escreve — não sobrou prop para chamar.
+    // (`pages/catalog/product-page.test.tsx`). A LISTA nunca escreve — não sobrou prop para chamar.
     it("custo hoje > fixado NA LISTA: nenhum Alert/'Voltar a acompanhar o custo' (mora só na ficha)", () => {
         useProductsMock.mockReturnValue(
             listState([n("p1", "Suporte", { sellerFixedPrice: "38.90" })]),

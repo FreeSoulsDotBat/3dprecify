@@ -205,7 +205,7 @@ describe("compor — UM bump por EXECUÇÃO (decisão B.3), nunca um por coletor
 describe("compor — fatia REPROVADA vira ABORTADO, e o PR sai PARCIAL (clarify Q4)", () => {
     // 40 entradas, e a fatia move 21 delas: acima do teto de 50% com ≥10 entradas.
     const muitas = Array.from({ length: 40 }, (_, i) => entrada(`cat-${i}`, 14));
-    const fatiaEmBloco = Array.from({ length: 21 }, (_, i) => ({
+    const sliceInBlock = Array.from({ length: 21 }, (_, i) => ({
         level: "ENTRY" as const,
         determinants: { plan: "PROFISSIONAL", category: `cat-${i}` },
         field: "commissionPct",
@@ -216,7 +216,7 @@ describe("compor — fatia REPROVADA vira ABORTADO, e o PR sai PARCIAL (clarify 
         ...padrao,
         base: baseSintetica(muitas),
         vereditos: [
-            lido("AMAZON", fatiaEmBloco),
+            lido("AMAZON", sliceInBlock),
             lido("SHOPEE", [
                 { level: "ENTRY", determinants: null, field: "commissionPct", value: 21 },
             ]),
@@ -287,7 +287,7 @@ describe("compor — o PR de DECISÃO e a dispensa (Q2/Q5)", () => {
         expect(r.kind).toBe("PR");
         expect(r.kind === "PR" && r.titulo.startsWith("DECISÃO — ")).toBe(true);
         expect(r.kind === "PR" && r.decisaoDoDono).toBe(true);
-        expect(r.kind === "PR" && r.dispensa).toBe(false);
+        expect(r.kind === "PR" && r.exemption).toBe(false);
     });
 
     it("sem decisão, o título é o normal e a dispensa segue o classificador", () => {
@@ -307,7 +307,7 @@ describe("compor — o PR de DECISÃO e a dispensa (Q2/Q5)", () => {
             ],
         });
         expect(r.kind === "PR" && r.titulo.startsWith("DECISÃO")).toBe(false);
-        expect(r.kind === "PR" && r.dispensa).toBe(true);
+        expect(r.kind === "PR" && r.exemption).toBe(true);
         expect(r.kind === "PR" && r.decisaoDoDono).toBe(false);
     });
 

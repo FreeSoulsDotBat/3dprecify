@@ -35,7 +35,7 @@ export default defineConfig({
                 "icons/icon-512.png",
                 "brand/logo/*.svg",
                 // 016/T072-A1 — a MESMA classe do 009/T016-N5, reintroduzida pela PR-B: a logo real virou
-                // PNG (logo-inteira-{white,black}.png) e o glob acima só cobria *.svg — offline, a
+                // PNG (logo-full-{white,black}.png) e o glob acima só cobria *.svg — offline, a
                 // primeira dobra voltou a mostrar o ícone de imagem quebrada. Medido: naturalWidth 0 em
                 // boot frio com SW. O glob por EXTENSÃO é o defeito recorrente; *.png fecha o par.
                 "brand/logo/*.png",

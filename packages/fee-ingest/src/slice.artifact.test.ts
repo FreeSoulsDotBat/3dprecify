@@ -22,7 +22,7 @@ describe("aplicarFatia — a REGRA DA FOLHA LIDA (ADR-0028 §3)", () => {
     // marketplace inteiro apagaria `freight`, `freightSubsidyInfo` e `optionalSurcharges` — devolvendo
     // ao líquido do vendedor o desconto de R$ 20 que o hotfix acabou de remover, em silêncio, na
     // primeira execução real do laço.
-    const fatiaSoComissao: CatalogSlice = {
+    const commissionOnlySlice: CatalogSlice = {
         marketplace: "SHOPEE",
         collectedAt: "2026-09-01",
         sourceUrl: "https://seller.shopee.com.br/edu/article/26839",
@@ -41,7 +41,7 @@ describe("aplicarFatia — a REGRA DA FOLHA LIDA (ADR-0028 §3)", () => {
         ],
     };
 
-    const aplicada = applySlice(base, fatiaSoComissao);
+    const aplicada = applySlice(base, commissionOnlySlice);
 
     it("aplica a folha que o coletor DECLAROU ter lido", () => {
         expect(aplicada.ok).toBe(true);

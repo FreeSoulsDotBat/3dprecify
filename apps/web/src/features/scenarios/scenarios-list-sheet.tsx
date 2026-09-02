@@ -147,7 +147,7 @@ function ScenarioCard({
 }
 
 // 019/PR-F (T092, US7) — extraída de `ScenarioListBody` (nome privado até aqui) para um export
-// NOMEADO no MESMO arquivo: `pages/calcular/calcular-page.tsx` (T095) monta ESTA função direto na
+// NOMEADO no MESMO arquivo: `pages/calculator/calculator-page.tsx` (T095) monta ESTA função direto na
 // coluna larga ≥1280px, sem passar pelo `Sheet`/gaveta que `ScenariosListSheet` continua sendo
 // (estreito). Mesmas props de sempre — `onOpenScenario`/`onClose`/`lapsed`/`gate` — nada mudou na
 // forma, só a visibilidade do símbolo. `ScenariosListSheet` (abaixo) é o único chamador da gaveta;

@@ -19,27 +19,27 @@ import type { CatalogJson } from "./slice.ts";
 // `nextCatalogVersion` produziria — é provada no PONTO DE GERAÇÃO (`compose.test.ts`).
 
 const ARTEFATO = new URL("../../../backend/app/data/catalog.json", import.meta.url);
-const SEMENTE = new URL("../../../apps/web/src/shared/fee-catalog/seed.data.json", import.meta.url);
+const SEED = new URL("../../../apps/web/src/shared/fee-catalog/seed.data.json", import.meta.url);
 
 const servido = JSON.parse(readFileSync(ARTEFATO, "utf8")) as CatalogJson;
-const sementeBruta = readFileSync(SEMENTE, "utf8");
-const semente = JSON.parse(sementeBruta) as CatalogJson;
+const rawSeed = readFileSync(SEED, "utf8");
+const seed = JSON.parse(rawSeed) as CatalogJson;
 
 const secao = (c: CatalogJson, mk: string) =>
     (c.marketplaces as CatalogJson[]).find((m) => m.marketplace === mk)!;
 
 describe("P0-a — a semente é a PROJEÇÃO do artefato servido, e nada além disso", () => {
     it("relação (i): `seed.data.json` é exatamente `projetarSemente(servido)`", () => {
-        expect(semente).toEqual(projectSeed(servido));
+        expect(seed).toEqual(projectSeed(servido));
     });
 
     it("e byte a byte — uma edição à mão da semente reprova aqui, não no mês que vem", () => {
-        expect(sementeBruta).toBe(serializeSeed(projectSeed(servido)));
+        expect(rawSeed).toBe(serializeSeed(projectSeed(servido)));
     });
 
     it("os metadados viajam INTACTOS — nenhum rótulo é digitado duas vezes", () => {
         for (const campo of ["catalogVersion", "schemaVersion", "generatedAt"]) {
-            expect(semente[campo]).toBe(servido[campo]);
+            expect(seed[campo]).toBe(servido[campo]);
         }
     });
 });
@@ -47,31 +47,29 @@ describe("P0-a — a semente é a PROJEÇÃO do artefato servido, e nada além d
 describe("a POLÍTICA de poda, como propriedade e não como acidente curatorial", () => {
     it("a seção por CATEGORIA é podada: sem espinha, sem entradas", () => {
         const amazonServido = secao(servido, "AMAZON");
-        const amazonSemente = secao(semente, "AMAZON");
+        const amazonSeed = secao(seed, "AMAZON");
         // a premissa, medida: o servido REALMENTE carrega o mapa que a semente não carrega
         expect((amazonServido.entries as unknown[]).length).toBeGreaterThan(70);
         expect(amazonServido.categorySpine).toBeDefined();
-        expect(amazonSemente.entries).toEqual([]);
-        expect(amazonSemente.categorySpine).toBeUndefined();
+        expect(amazonSeed.entries).toEqual([]);
+        expect(amazonSeed.categorySpine).toBeUndefined();
     });
 
     it("mas a CASCA fica — o marketplace continua existindo offline, com seus eixos", () => {
-        const amazonSemente = secao(semente, "AMAZON");
-        expect(amazonSemente.determinantsSchema).toEqual(
-            secao(servido, "AMAZON").determinantsSchema,
-        );
-        expect(amazonSemente.feeAxes).toEqual(secao(servido, "AMAZON").feeAxes);
+        const amazonSeed = secao(seed, "AMAZON");
+        expect(amazonSeed.determinantsSchema).toEqual(secao(servido, "AMAZON").determinantsSchema);
+        expect(amazonSeed.feeAxes).toEqual(secao(servido, "AMAZON").feeAxes);
     });
 
     it("a seção category-INDEPENDENTE viaja inteira, byte a byte", () => {
         // Este é o guarda que impede a poda de comer curadoria: `freightSubsidyInfo` e
         // `optionalSurcharges` são folhas do hotfix 016/A2 e do 016/US16, e nenhuma delas tem
         // equivalente no servido de outro marketplace para servir de rede.
-        expect(JSON.stringify(secao(semente, "SHOPEE"))).toBe(
+        expect(JSON.stringify(secao(seed, "SHOPEE"))).toBe(
             JSON.stringify(secao(servido, "SHOPEE")),
         );
-        expect(secao(semente, "SHOPEE").freightSubsidyInfo).toBeDefined();
-        expect(secao(semente, "SHOPEE").optionalSurcharges).toBeDefined();
+        expect(secao(seed, "SHOPEE").freightSubsidyInfo).toBeDefined();
+        expect(secao(seed, "SHOPEE").optionalSurcharges).toBeDefined();
     });
 
     it("o critério é a FORMA da tabela (o eixo `category`), não uma lista de nomes", () => {
@@ -82,7 +80,7 @@ describe("a POLÍTICA de poda, como propriedade e não como acidente curatorial"
     });
 
     it("a poda é o orçamento de boot: a semente é uma fração do servido (SC-810)", () => {
-        expect(sementeBruta.length).toBeLessThan(readFileSync(ARTEFATO, "utf8").length / 4);
+        expect(rawSeed.length).toBeLessThan(readFileSync(ARTEFATO, "utf8").length / 4);
     });
 });
 

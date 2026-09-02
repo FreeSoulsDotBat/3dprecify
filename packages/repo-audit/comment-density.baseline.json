@@ -1,7 +1,7 @@
 {
     "generatedAt": "2026-09-02",
     "totalComments": 7389,
-    "totalLines": 39106,
+    "totalLines": 39103,
     "files": {
         "apps/web/src/app/app-shell.tsx": {
             "longestBlock": 9,
@@ -439,6 +439,10 @@
             "longestBlock": 2,
             "proseBlocks": 0
         },
+        "apps/web/src/pages/account/account-page.tsx": {
+            "longestBlock": 7,
+            "proseBlocks": 13
+        },
         "apps/web/src/pages/bom/bom-lines-column.tsx": {
             "longestBlock": 3,
             "proseBlocks": 1
@@ -459,115 +463,111 @@
             "longestBlock": 2,
             "proseBlocks": 0
         },
-        "apps/web/src/pages/calcular/calcular-page-body.tsx": {
+        "apps/web/src/pages/calculator/calculator-page-body.tsx": {
             "longestBlock": 11,
             "proseBlocks": 5
         },
-        "apps/web/src/pages/calcular/calcular-page-kit-blocks.tsx": {
+        "apps/web/src/pages/calculator/calculator-page-kit-blocks.tsx": {
             "longestBlock": 6,
             "proseBlocks": 3
         },
-        "apps/web/src/pages/calcular/calcular-page.tsx": {
+        "apps/web/src/pages/calculator/calculator-page.tsx": {
             "longestBlock": 4,
             "proseBlocks": 2
         },
-        "apps/web/src/pages/calcular/catalog-picker-card.tsx": {
+        "apps/web/src/pages/calculator/catalog-picker-card.tsx": {
             "longestBlock": 5,
             "proseBlocks": 4
         },
-        "apps/web/src/pages/catalogo/catalogo-page.tsx": {
+        "apps/web/src/pages/catalog/catalog-page.tsx": {
             "longestBlock": 9,
             "proseBlocks": 9
         },
-        "apps/web/src/pages/catalogo/produto-page-body.tsx": {
+        "apps/web/src/pages/catalog/product-page-body.tsx": {
             "longestBlock": 6,
             "proseBlocks": 3
         },
-        "apps/web/src/pages/catalogo/produto-page-editable-section.tsx": {
+        "apps/web/src/pages/catalog/product-page-editable-section.tsx": {
             "longestBlock": 3,
             "proseBlocks": 1
         },
-        "apps/web/src/pages/catalogo/produto-page-header.tsx": {
+        "apps/web/src/pages/catalog/product-page-header.tsx": {
             "longestBlock": 4,
             "proseBlocks": 4
         },
-        "apps/web/src/pages/catalogo/produto-page-identity-section.tsx": {
+        "apps/web/src/pages/catalog/product-page-identity-section.tsx": {
             "longestBlock": 3,
             "proseBlocks": 2
         },
-        "apps/web/src/pages/catalogo/produto-page.tsx": {
+        "apps/web/src/pages/catalog/product-page.tsx": {
             "longestBlock": 6,
             "proseBlocks": 10
-        },
-        "apps/web/src/pages/conta/conta-page.tsx": {
-            "longestBlock": 7,
-            "proseBlocks": 13
         },
         "apps/web/src/pages/error/error-page.tsx": {
             "longestBlock": 4,
             "proseBlocks": 3
         },
-        "apps/web/src/pages/historico/compare-today.tsx": {
+        "apps/web/src/pages/history/compare-today.tsx": {
             "longestBlock": 7,
             "proseBlocks": 1
         },
-        "apps/web/src/pages/historico/historico-page.tsx": {
-            "longestBlock": 7,
-            "proseBlocks": 7
-        },
-        "apps/web/src/pages/historico/historico-search.ts": {
-            "longestBlock": 3,
-            "proseBlocks": 1
-        },
-        "apps/web/src/pages/historico/history-filter-bar.tsx": {
+        "apps/web/src/pages/history/history-filter-bar.tsx": {
             "longestBlock": 4,
             "proseBlocks": 3
         },
-        "apps/web/src/pages/historico/history-gate-states.tsx": {
+        "apps/web/src/pages/history/history-gate-states.tsx": {
             "longestBlock": 0,
             "proseBlocks": 0
         },
-        "apps/web/src/pages/historico/history-ledger.tsx": {
+        "apps/web/src/pages/history/history-ledger.tsx": {
             "longestBlock": 8,
             "proseBlocks": 11
         },
-        "apps/web/src/pages/historico/history-master-detail.tsx": {
+        "apps/web/src/pages/history/history-master-detail.tsx": {
             "longestBlock": 4,
             "proseBlocks": 1
         },
-        "apps/web/src/pages/historico/history-queue-banner.tsx": {
+        "apps/web/src/pages/history/history-page.tsx": {
+            "longestBlock": 7,
+            "proseBlocks": 7
+        },
+        "apps/web/src/pages/history/history-queue-banner.tsx": {
             "longestBlock": 2,
             "proseBlocks": 0
         },
-        "apps/web/src/pages/historico/history-snapshot-card.tsx": {
+        "apps/web/src/pages/history/history-search.ts": {
+            "longestBlock": 3,
+            "proseBlocks": 1
+        },
+        "apps/web/src/pages/history/history-snapshot-card.tsx": {
             "longestBlock": 5,
             "proseBlocks": 4
         },
-        "apps/web/src/pages/historico/quote-line-input.ts": {
+        "apps/web/src/pages/history/quote-line-input.ts": {
             "longestBlock": 8,
             "proseBlocks": 2
         },
-        "apps/web/src/pages/historico/recalc-today.tsx": {
+        "apps/web/src/pages/history/recalc-today.tsx": {
             "longestBlock": 9,
             "proseBlocks": 12
         },
-        "apps/web/src/pages/historico/snapshot-detail-channels.tsx": {
+        "apps/web/src/pages/history/snapshot-detail-channels.tsx": {
             "longestBlock": 5,
             "proseBlocks": 3
         },
-        "apps/web/src/pages/historico/snapshot-detail-page.tsx": {
+        "apps/web/src/pages/history/snapshot-detail-page.tsx": {
             "longestBlock": 7,
             "proseBlocks": 8
         },
-        "apps/web/src/pages/historico/snapshot-detail-quote.tsx": {
+        "apps/web/src/pages/history/snapshot-detail-quote.tsx": {
             "longestBlock": 9,
             "proseBlocks": 3
         },
-        "apps/web/src/pages/historico/snapshot-detail-sync-alert.tsx": {
+        "apps/web/src/pages/history/snapshot-detail-sync-alert.tsx": {
             "longestBlock": 5,
             "proseBlocks": 2
         },
-        "apps/web/src/pages/historico/snapshot-detail-tech.tsx": {
+        "apps/web/src/pages/history/snapshot-detail-tech.tsx": {
             "longestBlock": 4,
             "proseBlocks": 1
         },
@@ -575,7 +575,7 @@
             "longestBlock": 4,
             "proseBlocks": 1
         },
-        "apps/web/src/pages/privacidade/privacidade-page.tsx": {
+        "apps/web/src/pages/privacy/privacy-page.tsx": {
             "longestBlock": 3,
             "proseBlocks": 1
         },

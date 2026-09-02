@@ -259,8 +259,8 @@ import { PrintersPanel } from "@/features/catalog/printers-panel";
 import { ProductsPanel } from "@/features/catalog/products-panel";
 
 import { BomPage } from "@/pages/bom/bom-page";
-import { CatalogPage } from "@/pages/catalogo/catalogo-page";
-import { HistoryPage } from "@/pages/historico/historico-page";
+import { CatalogPage } from "@/pages/catalog/catalog-page";
+import { HistoryPage } from "@/pages/history/history-page";
 
 // ── Test helpers ─────────────────────────────────────────────────────────────────────────────
 
@@ -512,7 +512,7 @@ describe("T107 — features/catalog/**: zero escrita sob gate ≠ active", () =>
     }
 });
 
-describe("T107 — pages/catalogo/catalogo-page.tsx (as 4 abas + ProdutoPage): zero escrita sob gate ≠ active", () => {
+describe("T107 — pages/catalog/catalog-page.tsx (as 4 abas + ProdutoPage): zero escrita sob gate ≠ active", () => {
     for (const gate of NON_ACTIVE_GATES) {
         it(`todas as abas @ ${gate}: clicar em tudo não chama nenhuma escrita`, () => {
             setGate(gate, gate === "lapsed");
@@ -551,7 +551,7 @@ describe("T107 — pages/bom/bom-page.tsx: compor é sempre local; zero escrita 
     }
 });
 
-describe("T107 — pages/historico/historico-page.tsx: zero escrita sob gate ≠ active", () => {
+describe("T107 — pages/history/history-page.tsx: zero escrita sob gate ≠ active", () => {
     for (const gate of NON_ACTIVE_GATES) {
         it(`${gate}: clicar em tudo (busca, filtros, card do registro) não chama record/relabel/delete`, () => {
             const authenticated = gate !== "signed-out";

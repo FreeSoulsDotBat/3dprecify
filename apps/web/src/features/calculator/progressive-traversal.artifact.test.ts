@@ -53,14 +53,14 @@ describe("SC-814 — a travessia até o dinheiro, contra o artefato commitado", 
             const fees = entryToChannelFees(entry!);
             const base = limiar * 1.5; // seguramente acima do limiar
             const comProgressao = grossUp(base, fees);
-            const comSelecao = grossUp(base, semModo(fees));
+            const withSelection = grossUp(base, semModo(fees));
 
             expect(comProgressao.liquido).toBe(base);
-            expect(comSelecao.liquido).toBe(base); // a seleção também "fecha"…
+            expect(withSelection.liquido).toBe(base); // a seleção também "fecha"…
             // …mas fecha sobre uma comissão que a Amazon não cobraria: o anúncio da seleção é BAIXO demais,
             // e a diferença é exatamente o erro constante (15% − 10%) × limiar, propagado pelo gross-up.
-            expect(comProgressao.anuncio!).toBeGreaterThan(comSelecao.anuncio!);
-            const faltando = comProgressao.anuncio! - comSelecao.anuncio!;
+            expect(comProgressao.anuncio!).toBeGreaterThan(withSelection.anuncio!);
+            const faltando = comProgressao.anuncio! - withSelection.anuncio!;
             expect(faltando).toBeCloseTo(erroDaSelecao / 0.9, 1);
         },
     );

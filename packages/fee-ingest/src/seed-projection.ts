@@ -49,6 +49,6 @@ export function projectSeed(servido: CatalogJson): CatalogJson {
 
 /** O texto exato que vai para o disco — o MESMO formato do artefato servido (2 espaços + \n final),
  *  porque um diff de formatação num PR mensal de dinheiro é ruído que treina o revisor a não olhar. */
-export function serializeSeed(semente: CatalogJson): string {
-    return `${JSON.stringify(semente, null, 2)}\n`;
+export function serializeSeed(seed: CatalogJson): string {
+    return `${JSON.stringify(seed, null, 2)}\n`;
 }

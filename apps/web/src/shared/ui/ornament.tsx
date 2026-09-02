@@ -2,7 +2,7 @@ import { type CSSProperties, type HTMLAttributes } from "react";
 
 import "./ornament.css";
 
-export type OrnamentName = "arco" | "espada" | "linha-curva" | "onda";
+export type OrnamentName = "arc" | "sword" | "curved-line" | "wave";
 
 export interface OrnamentProps extends HTMLAttributes<HTMLSpanElement> {
     name: OrnamentName;
@@ -10,12 +10,12 @@ export interface OrnamentProps extends HTMLAttributes<HTMLSpanElement> {
 
 /**
  * Decorative brand flourish (research R10) — one per screen. Recoloured via
- * `currentColor` (CSS mask over the static SVG in `public/brand/grafismos`),
+ * `currentColor` (CSS mask over the static SVG in `public/brand/ornaments`),
  * always `aria-hidden`, and reduced-motion safe (no animation).
  */
 export function Ornament({ name, className = "", style, ...rest }: OrnamentProps) {
     const vars = {
-        "--tf-grafismo-src": `url("/brand/grafismos/${name}.svg")`,
+        "--tf-ornament-src": `url("/brand/ornaments/${name}.svg")`,
         ...style,
     } as CSSProperties;
     return (

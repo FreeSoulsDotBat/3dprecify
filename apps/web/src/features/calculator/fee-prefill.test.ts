@@ -470,16 +470,16 @@ describe("T013c — quem não escolhe categoria não é afetado pelo eixo novo (
         expect(semCat.viaCatchAll).toBe(false);
         expect(semCat.originCategoryId).toBeNull();
 
-        const selo = feeSealState({
+        const seal = feeSealState({
             entry: semCat.entry,
             source: "catalog",
             now: reviewedMs,
             edited: false,
             viaCatchAll: semCat.viaCatchAll,
         });
-        expect(selo.kind).toBe("reference");
+        expect(seal.kind).toBe("reference");
         // "categoria não informada" aqui inventaria uma escolha que o vendedor nunca recebeu.
-        expect(selo).not.toHaveProperty("originCategoryName");
+        expect(seal).not.toHaveProperty("originCategoryName");
     });
 
     it("ML sem categoria continua resolvendo pela modalidade, exatamente como antes do 014", () => {
@@ -499,20 +499,20 @@ describe("T013c — quem não escolhe categoria não é afetado pelo eixo novo (
     it("marketplace COM eixo: o slot sem categoria muda de propósito, e o selo diz que mudou", () => {
         const semCat = resolveSlot(catalog014, "AMAZON", "PROFISSIONAL");
         expect(semCat.viaCatchAll).toBe(true);
-        const selo = feeSealState({
+        const seal = feeSealState({
             entry: semCat.entry,
             source: "catalog",
             now: Date.parse("2026-07-28"),
             edited: false,
             viaCatchAll: semCat.viaCatchAll,
         });
-        expect(selo.kind).toBe("catchAll");
+        expect(seal.kind).toBe("catchAll");
     });
 
     // Offline é o mesmo caminho: a origem do valor muda o SELO, nunca a resolução.
     it("offline (semente) sem categoria resolve a MESMA entrada — só a origem do selo muda", () => {
         const online = resolveSlot(catalog, "SHOPEE", "PADRAO");
-        const selo = (source: "seed" | "catalog") =>
+        const seal = (source: "seed" | "catalog") =>
             feeSealState({
                 entry: online.entry,
                 source,
@@ -520,8 +520,8 @@ describe("T013c — quem não escolhe categoria não é afetado pelo eixo novo (
                 edited: false,
                 viaCatchAll: online.viaCatchAll,
             });
-        expect(selo("seed")).toMatchObject({ kind: "reference", embedded: true });
-        expect(selo("catalog")).toMatchObject({ kind: "reference", embedded: false });
+        expect(seal("seed")).toMatchObject({ kind: "reference", embedded: true });
+        expect(seal("catalog")).toMatchObject({ kind: "reference", embedded: false });
     });
 });
 

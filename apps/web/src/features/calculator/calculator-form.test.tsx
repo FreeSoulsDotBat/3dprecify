@@ -282,18 +282,18 @@ describe("T049 — o aviso de plausibilidade nasce no BLUR, não no change (019/
         await user.type(input, "60");
         await user.tab();
 
-        const avisoOk = await screen.findByTestId("aviso-rollWeightKg");
-        expect(avisoOk).toHaveTextContent(t.plausibility.closingNormal);
+        const noticeOk = await screen.findByTestId("aviso-rollWeightKg");
+        expect(noticeOk).toHaveTextContent(t.plausibility.closingNormal);
 
         await user.click(screen.getByRole("button", { name: "forçar erro" }));
 
-        const avisoComErro = screen.getByTestId("aviso-rollWeightKg");
-        expect(avisoComErro).toBeInTheDocument();
-        expect(avisoComErro).toHaveTextContent(t.plausibility.lesson.rollWeightKg);
-        expect(avisoComErro).not.toHaveTextContent("Confira o peso do rolo");
-        expect(avisoComErro).not.toHaveTextContent(t.plausibility.closingNormal);
+        const noticeWithError = screen.getByTestId("aviso-rollWeightKg");
+        expect(noticeWithError).toBeInTheDocument();
+        expect(noticeWithError).toHaveTextContent(t.plausibility.lesson.rollWeightKg);
+        expect(noticeWithError).not.toHaveTextContent("Confira o peso do rolo");
+        expect(noticeWithError).not.toHaveTextContent(t.plausibility.closingNormal);
         expect(
-            within(avisoComErro).queryByRole("button", { name: t.plausibility.understood }),
+            within(noticeWithError).queryByRole("button", { name: t.plausibility.understood }),
         ).not.toBeInTheDocument();
     });
 

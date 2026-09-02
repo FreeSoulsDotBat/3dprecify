@@ -7,13 +7,13 @@ import {
 
 import { AppShell } from "@/app/app-shell";
 import { BomPage } from "@/pages/bom/bom-page";
-import { CalculatePage } from "@/pages/calcular/calcular-page";
-import { CatalogPage } from "@/pages/catalogo/catalogo-page";
-import { AccountPage } from "@/pages/conta/conta-page";
+import { CalculatePage } from "@/pages/calculator/calculator-page";
+import { CatalogPage } from "@/pages/catalog/catalog-page";
+import { AccountPage } from "@/pages/account/account-page";
 import { ErrorPage } from "@/pages/error/error-page";
-import { HistoryPage } from "@/pages/historico/historico-page";
+import { HistoryPage } from "@/pages/history/history-page";
 import { NotFoundPage } from "@/pages/not-found/not-found-page";
-import { PrivacidadePage } from "@/pages/privacidade/privacidade-page";
+import { PrivacyPage } from "@/pages/privacy/privacy-page";
 import { SignInPage } from "@/pages/sign-in/sign-in-page";
 import { type SessionStatus } from "@/shared/session/session-store";
 
@@ -120,7 +120,7 @@ const catalogRoute = createRoute({
 
 // ⚠ @doc DEC-006 — estas rotas NÃO checam auth: só traduzem a forma da URL. O gate acontece no
 //   destino, cujo alvo o `safeRedirect` reconhece — checar aqui já engoliu o id duas vezes.
-const produtoNovoRoute = createRoute({
+const newProductRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/catalogo/produtos/novo",
     beforeLoad: () => {
@@ -128,7 +128,7 @@ const produtoNovoRoute = createRoute({
     },
 });
 
-const produtoEditRoute = createRoute({
+const editProductRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/catalogo/produtos/$productId",
     beforeLoad: ({ params }) => {
@@ -235,24 +235,24 @@ const signInRoute = createRoute({
 
 // FR-214 (006): the minimal honest privacy notice — public content, reachable signed-out (like
 // /calcular), linked from the sign-in screen. No `beforeLoad` guard.
-const privacidadeRoute = createRoute({
+const privacyRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/privacidade",
-    component: PrivacidadePage,
+    component: PrivacyPage,
 });
 
 export const routeTree = rootRoute.addChildren([
     indexRoute,
     calculateRoute,
     catalogRoute,
-    produtoNovoRoute,
-    produtoEditRoute,
+    newProductRoute,
+    editProductRoute,
     bomRoute,
     historyRoute,
     snapshotDetailRoute,
     accountRoute,
     signInRoute,
-    privacidadeRoute,
+    privacyRoute,
 ]);
 
 export const router = createRouter({

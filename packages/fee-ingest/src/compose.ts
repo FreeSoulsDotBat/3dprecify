@@ -25,7 +25,7 @@ export type RunOutcome =
           kind: "PR";
           titulo: string;
           body: string;
-          dispensa: boolean;
+          exemption: boolean;
           decisaoDoDono: boolean;
           /** O documento a publicar. Só existe aqui — é a FR-020a em nível de tipo. */
           catalog: CatalogJson;
@@ -148,7 +148,7 @@ export function compose(args: ComposeArgs): RunOutcome {
         vereditos: resolvidos,
         diff: diffCatalogs(base, publicado),
         vigias,
-        dispensa: exemptionDecided,
+        exemption: exemptionDecided,
         folhasDeOcr,
         ...(args.decisao ? { decisao: args.decisao } : {}),
     });
@@ -158,7 +158,7 @@ export function compose(args: ComposeArgs): RunOutcome {
         kind: "PR",
         titulo: args.decisao ? `DECISÃO — ${baseTitle}` : baseTitle,
         body,
-        dispensa: exemptionDecided.concedida,
+        exemption: exemptionDecided.concedida,
         decisaoDoDono: args.decisao !== undefined,
         catalog: publicado,
         vereditos: resolvidos,

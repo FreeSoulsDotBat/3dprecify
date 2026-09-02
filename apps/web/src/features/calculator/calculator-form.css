@@ -82,8 +82,9 @@
     .tf-calc-footer {
         align-items: center;
     }
-    /* Center the footer's own blocks (breakdown card, price-hero row, buttons) as a column, each
-     capped so a six-figure price row does not stretch edge-to-edge at 1120px. */
+    /* Center the footer's own blocks (breakdown card, price-hero row, buttons) as a column.
+     O teto de 720px foi REMOVIDO pelo dono em 2026-09-01, na homologação — decisão definitiva:
+     os blocos acompanham a largura do rodapé. */
     .tf-calc-footer > * {
         width: 100%;
     }

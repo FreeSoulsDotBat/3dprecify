@@ -128,8 +128,8 @@ describe("PONTO FIXO da migração — a fatia reproduz o artefato byte a byte (
             ...collection.previousEffectiveDates.values(),
             AMAZON_INDIVIDUAL_FEE_SOURCE.effectiveDate,
         ]);
-        const datasNaFatia = new Set(JSON.stringify(a).match(/\d{4}-\d{2}-\d{2}/g) ?? []);
-        for (const d of datasNaFatia) {
+        const datesInSlice = new Set(JSON.stringify(a).match(/\d{4}-\d{2}-\d{2}/g) ?? []);
+        for (const d of datesInSlice) {
             expect(datasDosInsumos.has(d), `data "${d}" na fatia não veio de nenhum insumo`).toBe(
                 true,
             );

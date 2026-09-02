@@ -5,7 +5,7 @@
    o que manda aqui é a decisão do dono — largura suficiente para os dois primitivos existentes
    (`tf-scenario-name`/`tf-scenario-note`, `scenario-list.css`) não truncarem cedo demais.
 
-   Só existe ≥1280px (`useIsWide`, `pages/calcular/calcular-page.tsx`) — abaixo dele esta árvore não
+   Só existe ≥1280px (`useIsWide`, `pages/calculator/calculator-page.tsx`) — abaixo dele esta árvore não
    monta, mesma disciplina de `.tf-catalog-md` (`catalog-master-detail.css`): o mobile continua
    exatamente como era (byte-idêntico, T093/baseline). */
 .tf-scenarios-wide {

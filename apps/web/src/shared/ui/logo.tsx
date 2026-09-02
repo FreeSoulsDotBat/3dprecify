@@ -28,7 +28,7 @@ export function Logo({ variant = "full", alt, className = "", ...rest }: LogoPro
     const decorative = alt === undefined;
     const src =
         variant === "full"
-            ? `/brand/logo/logo-inteira-${theme === "dark" ? "white" : "black"}.png`
+            ? `/brand/logo/logo-full-${theme === "dark" ? "white" : "black"}.png`
             : `/brand/logo/tf-symbol-color${theme === "dark" ? "-dark" : ""}.svg`;
     return (
         <img

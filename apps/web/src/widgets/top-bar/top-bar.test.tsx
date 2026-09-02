@@ -53,7 +53,7 @@ describe("TopBar logo (E1 items 6 / 7b / 4)", () => {
 
         const logo = screen.getByRole("img", { name: messages.appName });
         // 016/US3 — the full lockup is the owner's PNG artwork now, not the `tf-lockup` SVG.
-        expect(logo.getAttribute("src")).toContain("logo-inteira");
+        expect(logo.getAttribute("src")).toContain("logo-full");
     });
 
     it("renders the compact mark on mobile (≤425px)", async () => {
@@ -81,10 +81,10 @@ describe("019/T023 — a marca é a arte real", () => {
     const SRC = join(__dirname, "..", "..");
     const files = walk(SRC).filter((f) => !/\.(test|spec)\.tsx?$/.test(f));
 
-    it("o wordmark é logo-inteira-{white,black}.png nos DOIS temas", async () => {
+    it("o wordmark é logo-full-{white,black}.png nos DOIS temas", async () => {
         for (const [theme, art] of [
-            ["dark", "logo-inteira-white.png"],
-            ["light", "logo-inteira-black.png"],
+            ["dark", "logo-full-white.png"],
+            ["light", "logo-full-black.png"],
         ] as const) {
             useThemeStore.setState({ theme });
             render(<RouterProvider router={makeRouter(false, "/calcular")} />);

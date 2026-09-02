@@ -60,7 +60,7 @@ describe("freshest — resolution precedence", () => {
     it("uma versão ILEGÍVEL nunca vence uma legível — em qualquer ordem", () => {
         const quebrada: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: "invalid-seed" };
         const real: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: "2026-07-28.0" };
-        expect(freshest(real, quebrada)).toBe(real); // servido chegando por cima da semente quebrada
+        expect(freshest(real, quebrada)).toBe(real); // servido chegando por cima da seed quebrada
         expect(freshest(quebrada, real)).toBe(real); // e a quebrada não desbanca a boa que já está lá
     });
 
@@ -141,7 +141,7 @@ describe("fetchServedCatalog (schema-guarded refresh)", () => {
 // VENCER e o catálogo real ser recusado: o vendedor perderia o mapa inteiro da Amazon e o seletor
 // diria "este canal ainda não tem taxa de referência", com o mapa a um fetch de distância.
 describe("a semente é um PISO, não um competidor (T054/SC-805)", () => {
-    const semente: FeeCatalog = {
+    const seed: FeeCatalog = {
         ...FEE_CATALOG_SEED,
         catalogVersion: "2026-12-01.0", // mais NOVA que o servido, de propósito
     };
@@ -175,13 +175,13 @@ describe("a semente é um PISO, não um competidor (T054/SC-805)", () => {
     const entradas = (c: FeeCatalog) => c.marketplaces.reduce((n, m) => n + m.entries.length, 0);
 
     it("o servido tem mais cobertura que a semente — a premissa do teste, medida", () => {
-        expect(entradas(servido)).toBeGreaterThan(entradas(semente));
+        expect(entradas(servido)).toBeGreaterThan(entradas(seed));
     });
 
     it("uma semente com versão mais nova NÃO recusa o catálogo real", () => {
         // `freshest` sozinho diria que a semente vence; a adoção não pode obedecer só a isso.
-        expect(freshest(servido, semente)).toBe(semente);
-        expect(adoptCatalog({ catalog: semente, source: "seed" }, servido)).toMatchObject({
+        expect(freshest(servido, seed)).toBe(seed);
+        expect(adoptCatalog({ catalog: seed, source: "seed" }, servido)).toMatchObject({
             source: "catalog",
         });
     });
