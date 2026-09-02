@@ -25,6 +25,7 @@ import {
     SheetContent,
     SheetTitle,
     toast,
+    TextField,
 } from "@/shared/ui";
 
 // 010/T023+T029 (E5, PR-B US3/US6) — the "cenário carregado" context bar (ux §4.1), extended past
@@ -225,16 +226,13 @@ export function ScenarioContextBar({
                             <SheetTitle>{t.renameSheetTitle}</SheetTitle>
                             <Field label={t.nameField} required>
                                 {(p) => (
-                                    <div className="tf-inputwrap">
-                                        <input
-                                            {...p}
-                                            type="text"
-                                            className="tf-input"
-                                            maxLength={121}
-                                            value={renameValue}
-                                            onChange={(e) => setRenameValue(e.target.value)}
-                                        />
-                                    </div>
+                                    <TextField
+                                        {...p}
+                                        type="text"
+                                        maxLength={121}
+                                        value={renameValue}
+                                        onChange={(e) => setRenameValue(e.target.value)}
+                                    />
                                 )}
                             </Field>
                             <Button onClick={() => void submitRename()} loading={rename.isPending}>

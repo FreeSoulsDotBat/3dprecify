@@ -20,6 +20,7 @@ import {
     SheetDescription,
     SheetTitle,
     toast,
+    TextField,
 } from "@/shared/ui";
 
 import "./record-snapshot-sheet.css";
@@ -157,17 +158,14 @@ function RecordForm({ source, onDone }: { source: RecordSource; onDone: () => vo
 
             <Field label={t.labelField} hint={t.labelHint}>
                 {({ id, ...aria }) => (
-                    <div className="tf-inputwrap">
-                        <input
-                            id={id}
-                            {...aria}
-                            className="tf-input"
-                            type="text"
-                            maxLength={120}
-                            value={label}
-                            onChange={(e) => setLabel(e.target.value)}
-                        />
-                    </div>
+                    <TextField
+                        id={id}
+                        {...aria}
+                        type="text"
+                        maxLength={120}
+                        value={label}
+                        onChange={(e) => setLabel(e.target.value)}
+                    />
                 )}
             </Field>
 

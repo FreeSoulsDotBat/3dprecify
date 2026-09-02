@@ -160,6 +160,23 @@ export interface ScenarioFormPatch {
     discarded: DiscardedField[];
 }
 
+// ⚠ @doc DEC-127 — UMA conversão folha→formulário para os dois caminhos de reabertura: eram dois
+//   laços iguais, e é a classe do DEC-074 (corrigir a precisão num só e a outra segue mentindo).
+function leavesToFormScalars(
+    kept: Record<string, unknown>,
+): Partial<Record<CalcFieldName, string>> {
+    const scalars: Partial<Record<CalcFieldName, string>> = {};
+    for (const name of CALC_FIELD_NAMES) {
+        const leaf = kept[name];
+        if (typeof leaf === "string") {
+            scalars[name] = CURRENCY_FIELD_NAMES.has(name)
+                ? moneyLeafToPtBr(leaf, FIELD_PRECISION[name])
+                : decimalStringToPtBr(leaf);
+        }
+    }
+    return scalars;
+}
+
 export function applyScenarioConfig(config: ScenarioConfig): ScenarioFormPatch {
     // PR-A scope note: a KIT cost basis has no scalar `PriceInput` to hydrate the single-piece
     // calculator with (its `lastKnown` is a per-line list, not one input) — the Calcular page never
@@ -168,19 +185,12 @@ export function applyScenarioConfig(config: ScenarioConfig): ScenarioFormPatch {
     // composition is PR-B/T024. A PRODUCT basis is treated exactly like AD_HOC: PR-A never re-resolves
     // it live (D3/D6 is the read-time resolver added in PR-B/T022) — `lastKnown` is what both carry.
     const lastKnown = config.costBasis.kind === "KIT" ? null : config.costBasis.lastKnown;
-    const scalars: Partial<Record<CalcFieldName, string>> = {};
+    let scalars: Partial<Record<CalcFieldName, string>> = {};
     let discarded: DiscardedField[] = [];
     if (lastKnown) {
         const stripped = stripRetiredFields(lastKnown);
         discarded = stripped.discarded;
-        for (const name of CALC_FIELD_NAMES) {
-            const leaf = stripped.kept[name];
-            if (typeof leaf === "string") {
-                scalars[name] = CURRENCY_FIELD_NAMES.has(name)
-                    ? moneyLeafToPtBr(leaf, FIELD_PRECISION[name])
-                    : decimalStringToPtBr(leaf);
-            }
-        }
+        scalars = leavesToFormScalars(stripped.kept);
     }
 
     const channels: ChannelSlotForm[] = config.channels.map(channelIntentToForm);
@@ -248,15 +258,7 @@ export function computeScenarioKitChannels(
                 discarded.push(d);
             }
         }
-        const scalars: Partial<Record<CalcFieldName, string>> = {};
-        for (const name of CALC_FIELD_NAMES) {
-            const leaf = stripped.kept[name];
-            if (typeof leaf === "string") {
-                scalars[name] = CURRENCY_FIELD_NAMES.has(name)
-                    ? moneyLeafToPtBr(leaf, FIELD_PRECISION[name])
-                    : decimalStringToPtBr(leaf);
-            }
-        }
+        const scalars = leavesToFormScalars(stripped.kept);
         const formValues: CalcFormValues = {
             ...defaultCalcValues,
             ...scalars,

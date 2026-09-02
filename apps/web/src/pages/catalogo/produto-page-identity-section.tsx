@@ -1,7 +1,7 @@
 import { captionText, gridCard, sectionLabel } from "@/features/calculator/calculator-form";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { NAME_MAX } from "@/shared/lib/name-norm";
-import { Card, Field, Select } from "@/shared/ui";
+import { Card, Field, Select, TextField } from "@/shared/ui";
 
 import { EditableSection } from "./produto-page-editable-section";
 
@@ -48,17 +48,14 @@ export function ProductIdentitySection({
                         .replace("{max}", String(NAME_MAX))}
                 >
                     {(p) => (
-                        <div className="tf-inputwrap">
-                            <input
-                                {...p}
-                                type="text"
-                                className="tf-input"
-                                placeholder={pf.namePlaceholder}
-                                value={name}
-                                maxLength={NAME_MAX}
-                                onChange={(e) => onNameChange(e.target.value)}
-                            />
-                        </div>
+                        <TextField
+                            {...p}
+                            type="text"
+                            placeholder={pf.namePlaceholder}
+                            value={name}
+                            maxLength={NAME_MAX}
+                            onChange={(e) => onNameChange(e.target.value)}
+                        />
                     )}
                 </Field>
                 {/* 17b·2 — a dica some quando o erro NÃO é "nome repetido" (o `Field` compartilhado

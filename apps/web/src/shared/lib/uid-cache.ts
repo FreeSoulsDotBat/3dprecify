@@ -55,3 +55,17 @@ export function createUidCache<T, A extends unknown[] = [uid: string]>(config: {
 
     return { load, persist, purge };
 }
+
+/** ⚠ @doc DEC-128 — o guarda que os quatro caches de lista copiavam. ESTREITO: linha com campos a
+ *  mais passa (o servidor evolui), linha sem `id` não — sem `id` a UI não dedupica nem endereça. */
+export function isIdentifiedRowArray<T extends { id: string }>(raw: unknown): raw is T[] {
+    return (
+        Array.isArray(raw) &&
+        raw.every(
+            (x) =>
+                typeof x === "object" &&
+                x !== null &&
+                typeof (x as { id?: unknown }).id === "string",
+        )
+    );
+}

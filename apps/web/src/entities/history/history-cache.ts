@@ -1,5 +1,5 @@
 import type { SnapshotOut } from "@/shared/api/generated";
-import { createUidCache } from "@/shared/lib/uid-cache";
+import { createUidCache, isIdentifiedRowArray } from "@/shared/lib/uid-cache";
 
 // 009/T013 (E4, PR-A) — the uid-keyed READ cache for the Histórico (US2: readable offline).
 //
@@ -17,20 +17,10 @@ export function historyIdbKey(uid: string): string {
     return `history:snapshots:${uid}`;
 }
 
-/** A stored payload is trusted only if it is an array of rows each carrying a string `id`. */
-function isSnapshotArray(raw: unknown): raw is SnapshotOut[] {
-    return (
-        Array.isArray(raw) &&
-        raw.every(
-            (x) =>
-                typeof x === "object" &&
-                x !== null &&
-                typeof (x as { id?: unknown }).id === "string",
-        )
-    );
-}
-
-const cache = createUidCache<SnapshotOut[]>({ key: historyIdbKey, guard: isSnapshotArray });
+const cache = createUidCache<SnapshotOut[]>({
+    key: historyIdbKey,
+    guard: isIdentifiedRowArray<SnapshotOut>,
+});
 
 /** The uid's cached ledger; null on empty/error/corrupt (never a broken list fed to the UI). */
 export async function loadCachedSnapshots(uid: string): Promise<SnapshotOut[] | null> {

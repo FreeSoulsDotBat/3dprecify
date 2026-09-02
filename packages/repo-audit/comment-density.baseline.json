@@ -1,7 +1,7 @@
 {
-    "generatedAt": "2026-09-01",
-    "totalComments": 7377,
-    "totalLines": 39106,
+    "generatedAt": "2026-09-02",
+    "totalComments": 7389,
+    "totalLines": 39093,
     "files": {
         "apps/web/src/app/app-shell.tsx": {
             "longestBlock": 9,
@@ -314,6 +314,10 @@
         "apps/web/src/features/catalog/catalog-controls.tsx": {
             "longestBlock": 4,
             "proseBlocks": 2
+        },
+        "apps/web/src/features/catalog/catalog-form-shell.tsx": {
+            "longestBlock": 2,
+            "proseBlocks": 0
         },
         "apps/web/src/features/catalog/catalog-panel-dense-table.tsx": {
             "longestBlock": 5,
@@ -846,6 +850,10 @@
         "apps/web/src/shared/ui/table.tsx": {
             "longestBlock": 5,
             "proseBlocks": 1
+        },
+        "apps/web/src/shared/ui/text-field.tsx": {
+            "longestBlock": 2,
+            "proseBlocks": 0
         },
         "apps/web/src/shared/ui/theme-store.ts": {
             "longestBlock": 5,

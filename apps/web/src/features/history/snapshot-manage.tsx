@@ -13,6 +13,7 @@ import {
     DialogTitle,
     Field,
     toast,
+    TextField,
 } from "@/shared/ui";
 
 // 009/T022 (E4, PR-B, US6) — manage a snapshot from its detail: rename + delete.
@@ -84,17 +85,14 @@ function ManageBar({ item, serverId }: { item: HistoryItem; serverId: string }) 
                     <DialogTitle>{t.editLabel}</DialogTitle>
                     <Field label={t.labelField}>
                         {({ id, ...aria }) => (
-                            <div className="tf-inputwrap">
-                                <input
-                                    id={id}
-                                    {...aria}
-                                    className="tf-input"
-                                    type="text"
-                                    maxLength={120}
-                                    value={label}
-                                    onChange={(e) => setLabel(e.target.value)}
-                                />
-                            </div>
+                            <TextField
+                                id={id}
+                                {...aria}
+                                type="text"
+                                maxLength={120}
+                                value={label}
+                                onChange={(e) => setLabel(e.target.value)}
+                            />
                         )}
                     </Field>
                     <div className="flex justify-end gap-2">

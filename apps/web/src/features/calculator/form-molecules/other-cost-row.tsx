@@ -4,7 +4,7 @@ import { type Control, Controller } from "react-hook-form";
 
 import type { CalcFormValues } from "@/features/calculator/calculator-schema";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Button, Field, NumberField } from "@/shared/ui";
+import { Button, Field, NumberField, TextField } from "@/shared/ui";
 
 const t = messages.calculator;
 
@@ -34,20 +34,17 @@ export function OtherCostRow({
                 render={({ field }) => (
                     <Field className="flex-[3]">
                         {(p) => (
-                            <div className="tf-inputwrap">
-                                <input
-                                    {...p}
-                                    type="text"
-                                    className="tf-input"
-                                    aria-label={t.otherCosts.name}
-                                    placeholder={t.otherCosts.namePlaceholder}
-                                    name={field.name}
-                                    value={field.value}
-                                    onChange={field.onChange}
-                                    onBlur={field.onBlur}
-                                    ref={field.ref}
-                                />
-                            </div>
+                            <TextField
+                                {...p}
+                                type="text"
+                                aria-label={t.otherCosts.name}
+                                placeholder={t.otherCosts.namePlaceholder}
+                                name={field.name}
+                                value={field.value}
+                                onChange={field.onChange}
+                                onBlur={field.onBlur}
+                                ref={field.ref}
+                            />
                         )}
                     </Field>
                 )}

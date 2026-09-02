@@ -16,9 +16,12 @@ import { ROOT, sourceFiles, read, measure } from "./scan.ts";
 //   • `longestBlock` POR ARQUIVO, estrito. O pico continua preso — ele é o que pega o parágrafo único
 //     e enorme, que a contagem sozinha não distingue de três blocos curtos.
 //
-//   • A densidade TOTAL do repositório, um número só. Ela existe para dar folga local: acrescentar
-//     uma âncora de uma linha num arquivo não pode deixar o portão vermelho, mas uma volta geral
-//     da explicação para dentro das linhas, sim.
+//   • O TOTAL de linhas de comentário do repositório — número ABSOLUTO, nunca razão. Ele dá folga
+//     local (uma âncora de uma linha a mais não derruba o portão) sem permitir uma volta geral.
+//
+//     Era uma RAZÃO, e a razão mentia: nesta mesma frente, de-duplicar código derrubou 124 linhas
+//     totais e 2 comentários — e a razão SUBIU, acusando uma recaída que não existiu. Um denominador
+//     que encolhe não é explicação que cresce.
 //
 // Arquivo NOVO nasce sob o teto do padrão, sem precisar entrar na linha de base primeiro.
 //
@@ -107,9 +110,8 @@ describe("catraca de densidade — a explicação não volta para dentro da linh
         expect(worse).toEqual([]);
     });
 
-    it("a densidade total do repositório não subiu", () => {
-        const before = baseline.totalComments / baseline.totalLines;
-        const now = current.totalComments / current.totalLines;
-        expect(now).toBeLessThanOrEqual(before);
+    it("o total de linhas de comentário do repositório não subiu", () => {
+        // ABSOLUTO, não razão: encolher o código não pode ser lido como escrever explicação.
+        expect(current.totalComments).toBeLessThanOrEqual(baseline.totalComments);
     });
 });

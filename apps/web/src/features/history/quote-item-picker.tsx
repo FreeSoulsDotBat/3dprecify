@@ -1,7 +1,7 @@
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatBRL } from "@/shared/lib/decimal-ptbr";
 import { formatDayMonthPtBr } from "@/shared/lib/format-date";
-import { Button, Card, Field, Icon, NumberField } from "@/shared/ui";
+import { Button, Card, Field, Icon, NumberField, TextField } from "@/shared/ui";
 
 import {
     itemId,
@@ -48,17 +48,14 @@ export function QuoteItemPicker({
         <div className="flex flex-col gap-3" data-testid="quote-builder">
             <Field label={t.clientLabel}>
                 {({ id, ...aria }) => (
-                    <div className="tf-inputwrap">
-                        <input
-                            id={id}
-                            {...aria}
-                            className="tf-input"
-                            type="text"
-                            maxLength={120}
-                            value={clientLabel}
-                            onChange={(e) => onClientLabelChange(e.target.value)}
-                        />
-                    </div>
+                    <TextField
+                        id={id}
+                        {...aria}
+                        type="text"
+                        maxLength={120}
+                        value={clientLabel}
+                        onChange={(e) => onClientLabelChange(e.target.value)}
+                    />
                 )}
             </Field>
 

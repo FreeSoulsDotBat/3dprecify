@@ -10,7 +10,7 @@ import {
     searchCategories,
 } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Button, Field } from "@/shared/ui";
+import { Button, Field, TextField } from "@/shared/ui";
 
 import "./category-picker.css";
 
@@ -181,18 +181,15 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
               look-alike rebuilt here. This field decides which commission the seller is charged and
               it used to render as a raw 24px `<input>` with no border, background or padding
               (T115). */}
-                    <div className="tf-inputwrap">
-                        <input
-                            id={id}
-                            aria-describedby={describedBy}
-                            type="text"
-                            autoComplete="off"
-                            className="tf-input"
-                            placeholder={t.placeholder}
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                        />
-                    </div>
+                    <TextField
+                        id={id}
+                        aria-describedby={describedBy}
+                        type="text"
+                        autoComplete="off"
+                        placeholder={t.placeholder}
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                    />
                     {/* T117 — ONE live region, always mounted. Both halves matter. "Always mounted" because a
               region that appears together with its text is not reliably announced: the reader has to
               be watching it before the content changes. "One" because the count and the no-results

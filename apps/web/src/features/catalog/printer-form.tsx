@@ -3,15 +3,8 @@ import { useForm } from "react-hook-form";
 import type { PrinterIn } from "@/shared/api/generated";
 import type { PremiumGate } from "@/shared/billing/premium-gate";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Alert, Button } from "@/shared/ui";
-import { Frozen } from "@/shared/ui/frozen";
-
-import {
-    ControlledNumber,
-    ControlledText,
-    PremiumFooterNote,
-    PremiumInviteCta,
-} from "./catalog-controls";
+import { CatalogFormShell } from "./catalog-form-shell";
+import { ControlledNumber, ControlledText } from "./catalog-controls";
 import { type PrinterFormValues, printerResolver, printerToWire } from "./catalog-schema";
 
 // Printer create/edit form (T022) — the mirror of FilamentForm. Same RHF + E1 validation (the
@@ -51,7 +44,6 @@ export function PrinterForm({
         resolver: printerResolver,
         mode: "onTouched",
     });
-    const active = gate === "active";
     const formFields = (
         <>
             <ControlledText
@@ -95,37 +87,15 @@ export function PrinterForm({
     );
 
     return (
-        <form
-            className="flex flex-col gap-3"
+        <CatalogFormShell
+            mode={mode}
+            gate={gate}
+            submitting={submitting}
+            submitError={submitError}
+            onCancel={onCancel}
             onSubmit={onSubmit && handleSubmit((values) => onSubmit(printerToWire(values)))}
-            noValidate
         >
-            {active ? (
-                <fieldset className="flex flex-col gap-3 border-0 p-0 m-0">{formFields}</fieldset>
-            ) : (
-                <Frozen
-                    className="flex flex-col gap-3 border-0 p-0 m-0"
-                    data-testid="catalog-form-frozen"
-                >
-                    {formFields}
-                </Frozen>
-            )}
-
-            {submitError && <Alert tone="danger">{submitError}</Alert>}
-
-            {!active && <PremiumFooterNote gate={gate} />}
-
-            <div className={active ? "flex justify-end gap-2" : "flex justify-between gap-2"}>
-                {active && (
-                    <Button variant="ghost" onClick={onCancel}>
-                        {cf.cancel}
-                    </Button>
-                )}
-                {!active && <PremiumInviteCta gate={gate} />}
-                <Button type={active ? "submit" : "button"} disabled={!active} loading={submitting}>
-                    {mode === "edit" ? cf.saveChanges : cf.save}
-                </Button>
-            </div>
-        </form>
+            {formFields}
+        </CatalogFormShell>
     );
 }

@@ -1,5 +1,5 @@
 import type { FilamentOut, PrinterOut, ProductOut } from "@/shared/api/generated";
-import { createUidCache } from "@/shared/lib/uid-cache";
+import { createUidCache, isIdentifiedRowArray } from "@/shared/lib/uid-cache";
 
 // Uid-keyed read-cache primitives for the personal catalog (T018). This mirrors the fee-catalog
 // store (TanStack Query + idb-keyval) with the CRITICAL differences the identity-leak lesson
@@ -27,23 +27,9 @@ export function catalogQueryKey(resource: CatalogResource, uid: string | undefin
 /** Fuzzy root key — `removeQueries({ queryKey: CATALOG_QUERY_ROOT })` clears every uid entry. */
 export const CATALOG_QUERY_ROOT = ["catalog"] as const;
 
-/** A stored payload is only trusted if it is an array of objects each carrying a string `id`. A
- *  corrupt/foreign shape is discarded (null) rather than fed to the UI as a broken list. */
-function isCatalogArray(raw: unknown): raw is CatalogItem[] {
-    return (
-        Array.isArray(raw) &&
-        raw.every(
-            (x) =>
-                typeof x === "object" &&
-                x !== null &&
-                typeof (x as { id?: unknown }).id === "string",
-        )
-    );
-}
-
 const cache = createUidCache<CatalogItem[], [resource: CatalogResource, uid: string]>({
     key: catalogIdbKey,
-    guard: isCatalogArray,
+    guard: isIdentifiedRowArray<CatalogItem>,
 });
 
 /** Load + shape-guard the uid's cached list; null on empty/error/corrupt (non-blocking). */

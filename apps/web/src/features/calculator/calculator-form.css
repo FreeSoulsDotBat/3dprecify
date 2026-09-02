@@ -86,7 +86,6 @@
      capped so a six-figure price row does not stretch edge-to-edge at 1120px. */
     .tf-calc-footer > * {
         width: 100%;
-        max-width: 720px;
     }
 }
 

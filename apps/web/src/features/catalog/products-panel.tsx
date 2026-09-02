@@ -24,6 +24,7 @@ import {
     DialogContent,
     DialogTitle,
     Field,
+    TextField,
 } from "@/shared/ui";
 
 import { productNeedsAttention, productSummary } from "@/entities/catalog/product-summary";
@@ -233,16 +234,13 @@ export function ProductsPanel({
                                     .replace("{max}", String(NAME_MAX))}
                             >
                                 {(p) => (
-                                    <div className="tf-inputwrap">
-                                        <input
-                                            {...p}
-                                            type="text"
-                                            className="tf-input"
-                                            value={duplicateName}
-                                            maxLength={NAME_MAX}
-                                            onChange={(e) => setDuplicateName(e.target.value)}
-                                        />
-                                    </div>
+                                    <TextField
+                                        {...p}
+                                        type="text"
+                                        value={duplicateName}
+                                        maxLength={NAME_MAX}
+                                        onChange={(e) => setDuplicateName(e.target.value)}
+                                    />
                                 )}
                             </Field>
                             <BreakdownRow

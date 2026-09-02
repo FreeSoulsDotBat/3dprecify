@@ -94,5 +94,7 @@ export type { PlistProps, PlistItemData, PlistFlag, PlistFlagTone } from "./plis
 export { Table } from "./table";
 export type { TableProps } from "./table";
 
+export { TextField } from "./text-field";
+export type { TextFieldProps } from "./text-field";
 export { Aviso } from "./aviso";
 export type { AvisoProps } from "./aviso";

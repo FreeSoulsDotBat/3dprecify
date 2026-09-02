@@ -3,7 +3,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import { useRenameScenario } from "@/entities/scenario/use-scenarios";
 import type { ScenarioOut } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Button, Field, Sheet, SheetContent, SheetTitle, toast } from "@/shared/ui";
+import { Button, Field, Sheet, SheetContent, SheetTitle, toast, TextField } from "@/shared/ui";
 
 import { honestWriteError } from "@/shared/api/error-messages";
 
@@ -79,16 +79,13 @@ export const RenameScenarioSheet = forwardRef<RenameScenarioSheetHandle>(
                         <SheetTitle>{t.renameSheetTitle}</SheetTitle>
                         <Field label={t.nameField} required>
                             {(p) => (
-                                <div className="tf-inputwrap">
-                                    <input
-                                        {...p}
-                                        type="text"
-                                        className="tf-input"
-                                        maxLength={121}
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                    />
-                                </div>
+                                <TextField
+                                    {...p}
+                                    type="text"
+                                    maxLength={121}
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                />
                             )}
                         </Field>
                         <Field label={t.noteField} optional>

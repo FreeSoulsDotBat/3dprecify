@@ -3,7 +3,7 @@ import type { BomLineResult } from "@3dprecify/pricing-core";
 import type { CalcOutcome } from "@/features/calculator/calculator-model";
 import { BomLineCard } from "@/features/bom/bom-line-card";
 import type { ProductOut } from "@/shared/api/generated";
-import { Button, Field, Icon } from "@/shared/ui";
+import { Button, Field, Icon, TextField } from "@/shared/ui";
 import { BomLineEditor } from "@/widgets/bom-line-editor/bom-line-editor";
 
 import { defaultPieceName, type KitSaveLine, savesAsReference } from "./kit-save";
@@ -91,20 +91,17 @@ export function BomLinesColumn({
                                 )}
                                 <Field label={t.pieceName}>
                                     {(p) => (
-                                        <div className="tf-inputwrap">
-                                            <input
-                                                {...p}
-                                                type="text"
-                                                className="tf-input"
-                                                placeholder={defaultPieceName(i, kitName)}
-                                                value={line.pieceNameRaw}
-                                                onChange={(e) =>
-                                                    updateLine(line.id, {
-                                                        pieceNameRaw: e.target.value,
-                                                    })
-                                                }
-                                            />
-                                        </div>
+                                        <TextField
+                                            {...p}
+                                            type="text"
+                                            placeholder={defaultPieceName(i, kitName)}
+                                            value={line.pieceNameRaw}
+                                            onChange={(e) =>
+                                                updateLine(line.id, {
+                                                    pieceNameRaw: e.target.value,
+                                                })
+                                            }
+                                        />
                                     )}
                                 </Field>
                             </div>

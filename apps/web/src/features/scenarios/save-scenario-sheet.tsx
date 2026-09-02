@@ -16,6 +16,7 @@ import {
     SheetDescription,
     SheetTitle,
     toast,
+    TextField,
 } from "@/shared/ui";
 
 // ⚠ @doc DEC-069 — `buildConfig()` roda UMA vez, na ABERTURA da Sheet: salva-se o que o vendedor
@@ -138,16 +139,13 @@ function SaveForm({ source, onDone }: { source: SaveScenarioSource; onDone: () =
                 error={nameError && (name !== "" || tentouSalvar) ? nameError : undefined}
             >
                 {(p) => (
-                    <div className="tf-inputwrap">
-                        <input
-                            {...p}
-                            type="text"
-                            className="tf-input"
-                            maxLength={NAME_MAX + 1}
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
-                    </div>
+                    <TextField
+                        {...p}
+                        type="text"
+                        maxLength={NAME_MAX + 1}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                    />
                 )}
             </Field>
 

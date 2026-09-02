@@ -3193,3 +3193,64 @@ nunca renderiza), então nenhuma guarda de geometria existente regrediu.
 
 - `apps/web/src/pages/calcular/calcular-page.tsx` → `CalculatorGrid`
 
+---
+
+## DEC-126 — A casca do formulário de catálogo é UMA, e a barreira mora nela
+
+**Data**: 2026-09-01 (frente de clean code) · **Governa**: `CatalogFormShell`
+
+`FilamentForm` e `PrinterForm` eram **37 linhas idênticas cada** — do `return (` até o fim — mais a
+mesma interface de props e o mesmo setup de RHF. A única coisa que difere entre eles são os CAMPOS.
+
+A casca é agora a única dona da forma que o [[DEC-070]] descreve: o `<fieldset>` × `<Frozen>`, a
+linha de erro honesta, o rodapé com o convite único (FR-1906) e os botões. **E é ela que carrega a
+barreira**: fora de `active` o `<form>` não recebe `onSubmit` — a ausência do handler é a barreira,
+nunca um `disabled` sozinho (019/PR-B, T045).
+
+Não encolheu o total de linhas, e não é esse o ponto: um terceiro formulário de entidade passa a
+custar só os campos dele, e uma correção na barreira acontece **num lugar**, não em N.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/catalog/catalog-form-shell.tsx` → `CatalogFormShell`
+
+---
+
+## DEC-127 — Uma conversão folha→formulário para os DOIS caminhos de reabertura
+
+**Data**: 2026-09-01 (frente de clean code) · **Governa**: `leavesToFormScalars`
+
+O mesmo laço — folha decimal → string de formulário pt-BR, com a máscara de moeda e a precisão por
+campo — estava escrito **duas vezes** no `scenario-bridge`: uma na reabertura escalar, outra na do
+KIT.
+
+É a classe exata do [[DEC-074]]: lá, cravar a precisão em 2 num só dos caminhos truncou a tarifa de
+4 casas em silêncio. Com duas cópias, **a próxima correção conserta uma e deixa a outra mentindo**.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/scenario-bridge.ts` → `leavesToFormScalars`
+
+---
+
+## DEC-128 — O DS ganha `TextField`: primitivo que falta vira cópia
+
+**Data**: 2026-09-01 (frente de clean code) · **Governa**: `TextField`
+
+O design system tinha `NumberField` e **não tinha o par de texto**. Consequência medida: **13
+arquivos** escreviam à mão `<div className="tf-inputwrap"><input className="tf-input" …/></div>`,
+cada um repetindo a moldura que o primitivo deveria possuir.
+
+`TextField` espelha o contrato do `NumberField` — mesma moldura, mesmas variantes de
+tamanho/erro/desabilitado, `className` no WRAPPER. A saída no DOM é idêntica à das 13 cópias, e é por
+isso que a migração não precisou de homologação visual: nenhum nó, nenhuma classe mudou.
+
+**A armadilha que a migração quase criou**: as cópias traziam `className="tf-input"` no `<input>`, e
+carregá-lo para o `<TextField>` teria posto essa classe no WRAPPER. O teste do primitivo pina
+exatamente isso.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/ui/text-field.tsx` → `TextField`
+- `apps/web/src/shared/lib/uid-cache.ts` → `isIdentifiedRowArray`
+

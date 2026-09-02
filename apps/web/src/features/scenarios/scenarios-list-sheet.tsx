@@ -23,6 +23,7 @@ import {
     SheetTitle,
     Spinner,
     toast,
+    TextField,
 } from "@/shared/ui";
 
 import { DeleteScenarioDialog, type DeleteScenarioDialogHandle } from "./delete-scenario-dialog";
@@ -258,17 +259,14 @@ export function ScenariosList({
           the real T030 "manage" red.) */}
             <Field tightLabel>
                 {(p) => (
-                    <div className="tf-inputwrap">
-                        <input
-                            {...p}
-                            type="text"
-                            className="tf-input"
-                            placeholder={t.searchPlaceholder}
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            aria-label={t.searchPlaceholder}
-                        />
-                    </div>
+                    <TextField
+                        {...p}
+                        type="text"
+                        placeholder={t.searchPlaceholder}
+                        value={query}
+                        onChange={(e) => setQuery(e.target.value)}
+                        aria-label={t.searchPlaceholder}
+                    />
                 )}
             </Field>
 

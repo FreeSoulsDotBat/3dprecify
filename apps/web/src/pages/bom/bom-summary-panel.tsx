@@ -8,7 +8,7 @@ import type { Materialization } from "@/shared/api/generated";
 import { type PremiumGate } from "@/shared/billing/premium-gate";
 import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Alert, Button, Field } from "@/shared/ui";
+import { Alert, Button, Field, TextField } from "@/shared/ui";
 
 import type { KitSaveLine } from "./kit-save";
 
@@ -102,16 +102,13 @@ export function BomSummaryPanel({
             <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--border)] p-4">
                 <Field label={t.kitName} required>
                     {(p) => (
-                        <div className="tf-inputwrap">
-                            <input
-                                {...p}
-                                type="text"
-                                className="tf-input"
-                                placeholder={t.kitNamePlaceholder}
-                                value={kitName}
-                                onChange={(e) => onKitNameChange(e.target.value)}
-                            />
-                        </div>
+                        <TextField
+                            {...p}
+                            type="text"
+                            placeholder={t.kitNamePlaceholder}
+                            value={kitName}
+                            onChange={(e) => onKitNameChange(e.target.value)}
+                        />
                     )}
                 </Field>
                 {/* While lapsed, a refused save is the EXPECTED answer, not a failure — the rest of

@@ -1,5 +1,5 @@
 import type { BomOut } from "@/shared/api/generated";
-import { createUidCache } from "@/shared/lib/uid-cache";
+import { createUidCache, isIdentifiedRowArray } from "@/shared/lib/uid-cache";
 
 // Uid-keyed read-cache primitives for saved KITS (T014). Deliberately a MIRROR of
 // `entities/catalog/catalog-cache` rather than a reuse of it: FSD-Lite lets an entity import only
@@ -24,21 +24,7 @@ export function bomQueryKey(uid: string | undefined) {
 /** Fuzzy root key — `removeQueries({ queryKey: BOM_QUERY_ROOT })` clears every uid entry. */
 export const BOM_QUERY_ROOT = ["boms"] as const;
 
-/** A stored payload is trusted only if it is an array of objects each carrying a string `id`.
- *  A corrupt or foreign shape is discarded rather than fed to the UI as a broken list. */
-function isBomArray(raw: unknown): raw is BomOut[] {
-    return (
-        Array.isArray(raw) &&
-        raw.every(
-            (x) =>
-                typeof x === "object" &&
-                x !== null &&
-                typeof (x as { id?: unknown }).id === "string",
-        )
-    );
-}
-
-const cache = createUidCache<BomOut[]>({ key: bomIdbKey, guard: isBomArray });
+const cache = createUidCache<BomOut[]>({ key: bomIdbKey, guard: isIdentifiedRowArray<BomOut> });
 
 /** Load + shape-guard the uid's cached kits; null on empty/error/corrupt (non-blocking). */
 export async function loadCachedBoms(uid: string): Promise<BomOut[] | null> {

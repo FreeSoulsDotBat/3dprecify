@@ -139,15 +139,7 @@ function FeeReferenceAlert({
                 onDismiss={() => dismissFeeSeal(key)}
                 action={
                     state.sourceUrl ? (
-                        <button type="button" onClick={() => setSourceOpen(true)}>
-                            {t.viewSource}
-                            {/* 019/PR-C — decisão do dono 28/08: chevron "como no design" (13a·2), decorativo. */}
-                            <Icon
-                                name="chevron-down"
-                                size={16}
-                                style={{ transform: "rotate(-90deg)" }}
-                            />
-                        </button>
+                        <ViewSourceButton onOpen={() => setSourceOpen(true)} />
                     ) : undefined
                 }
             >
@@ -188,6 +180,18 @@ function FeeReferenceAlert({
 }
 
 /** The honesty seal for one channel slot (or the ML freight field). */
+
+/** O botão "Ver fonte" — era o MESMO JSX em dois selos deste arquivo. O chevron é decorativo
+ *  (019/PR-C, decisão do dono 28/08: "como no design", 13a·2). */
+function ViewSourceButton({ onOpen }: { onOpen: () => void }) {
+    return (
+        <button type="button" onClick={onOpen}>
+            {t.viewSource}
+            <Icon name="chevron-down" size={16} style={{ transform: "rotate(-90deg)" }} />
+        </button>
+    );
+}
+
 export function FeeSeal({
     state,
     marketplace,
@@ -246,17 +250,7 @@ export function FixedFeeSourceBadge({
                 data-testid="fixed-fee-source-seal"
                 dismissLabel={t.dismiss}
                 onDismiss={() => dismissFeeSeal(key)}
-                action={
-                    <button type="button" onClick={() => setSourceOpen(true)}>
-                        {t.viewSource}
-                        {/* 019/PR-C — decisão do dono 28/08: chevron "como no design" (13a·2), decorativo. */}
-                        <Icon
-                            name="chevron-down"
-                            size={16}
-                            style={{ transform: "rotate(-90deg)" }}
-                        />
-                    </button>
-                }
+                action={<ViewSourceButton onOpen={() => setSourceOpen(true)} />}
             >
                 <p className="fee-seal__label">{t.fixedFeeSource}</p>
                 <p className="fee-seal__cite">{source.source}</p>

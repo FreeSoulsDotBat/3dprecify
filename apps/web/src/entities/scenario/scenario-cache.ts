@@ -1,5 +1,5 @@
 import type { ScenarioOut } from "@/shared/api/generated";
-import { createUidCache } from "@/shared/lib/uid-cache";
+import { createUidCache, isIdentifiedRowArray } from "@/shared/lib/uid-cache";
 
 // 010/T012 (E5, PR-A) — the uid-keyed READ cache for "Meus cenários" (US2: readable offline).
 //
@@ -26,20 +26,10 @@ export function scenarioQueryKey(uid: string | undefined) {
 /** Fuzzy root key — `removeQueries({ queryKey: SCENARIO_QUERY_ROOT })` clears every uid entry. */
 export const SCENARIO_QUERY_ROOT = ["scenarios"] as const;
 
-/** A stored payload is trusted only if it is an array of rows each carrying a string `id`. */
-function isScenarioArray(raw: unknown): raw is ScenarioOut[] {
-    return (
-        Array.isArray(raw) &&
-        raw.every(
-            (x) =>
-                typeof x === "object" &&
-                x !== null &&
-                typeof (x as { id?: unknown }).id === "string",
-        )
-    );
-}
-
-const cache = createUidCache<ScenarioOut[]>({ key: scenarioIdbKey, guard: isScenarioArray });
+const cache = createUidCache<ScenarioOut[]>({
+    key: scenarioIdbKey,
+    guard: isIdentifiedRowArray<ScenarioOut>,
+});
 
 /** The uid's cached (unfiltered) scenario list; null on empty/error/corrupt — never a broken list
  *  fed to the UI. */
